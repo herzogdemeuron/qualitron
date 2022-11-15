@@ -1,0 +1,7 @@
+layout:
+  - Settings[title:Settings]
+  - Warnings[title:Visualize Warnings]
+  - CheckParameterValues[title:Check Parameter Values]
+  - CompareParameterValues[title:Compare Parameter Values]
+  - Clear[title:Clear Overrides]
+  - AreaHelper[title:Area Helper]

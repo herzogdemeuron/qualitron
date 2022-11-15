@@ -1,0 +1,56 @@
+{
+  "providers": [
+    {
+      "name": "Wall Is Slanted",
+      "config": {
+        "filters": [
+          {
+            "rule": "byCategory",
+            "args": [
+              "Walls"
+            ]
+          }
+         
+        ],
+        "rules": [
+          {
+            "rule": "byStringEquals",
+            "args": [
+              "Cross-Section",
+              "Slanted"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Floors With Area Between 500 and 5000",
+      "config": {
+        "filters": [
+          {
+            "rule": "byCategory",
+            "args": [
+              "Floors"
+            ]
+          }
+        ],
+        "rules": [
+          {
+            "rule": "byNumberIsLess",
+            "args": [
+              "Area",
+              5000
+            ]
+          },
+          {
+            "rule": "byNumberIsGreater",
+            "args": [
+              "Area",
+              500
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
