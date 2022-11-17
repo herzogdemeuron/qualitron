@@ -9,7 +9,7 @@ from System.Windows.Media import BrushConverter
 
 
 class ColorSwitchWindow(forms.CommandSwitchWindow):
-    '''
+    """
     Extended form to select from a list of command options.
 
     Args:
@@ -18,7 +18,7 @@ class ColorSwitchWindow(forms.CommandSwitchWindow):
         message (str): window title message
         config (dict): dictionary of config dicts for options or switches
         recognize_access_key (bool): recognize '_' as mark of access key
-    '''
+    """
 
     def __init__(self,
                 context,
@@ -28,9 +28,9 @@ class ColorSwitchWindow(forms.CommandSwitchWindow):
                 width,
                 height,
                 **kwargs):
-        '''
+        """
         Initialize user input window.
-        '''
+        """
         WPFWindow.__init__(self,
                            op.join(xamlFilesDir, xamlSource),
                            handle_esc=True)
