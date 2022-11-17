@@ -4,13 +4,11 @@ It enables you to set specific rules for a model and to visually check if the
 model complies. The visual features help you understand and correct the integrity
 of your Revit models.
 """
-import variables
-from view import *
-from warning import *
-from parameter import *
-from ui import *
-from colors import *
-from providers import *
-from analyze import *
-from areas import *
-from event import *
+import qualitron.variables
+from qualitron.view import *
+from qualitron.warning import *
+from qualitron.parameter import *
+from qualitron.ui import *
+from qualitron.colors import *
+from qualitron.providers import *
+from qualitron.analyze import *
