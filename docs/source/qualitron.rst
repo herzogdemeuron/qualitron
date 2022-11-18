@@ -1,5 +1,6 @@
-Developer Guide
-=================
+qualitron
+=========
+	
 
 .. automodule:: qualitron
    :members:
@@ -10,7 +11,7 @@ Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    qualitron.analyze
    qualitron.colors

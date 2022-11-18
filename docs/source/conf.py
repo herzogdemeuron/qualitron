@@ -19,6 +19,8 @@ copyright = '2022, Yskert Schindel'
 author = 'Yskert Schindel'
 release = '0.1'
 
+master_doc = 'index'
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
@@ -48,7 +50,7 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = ['modules.rst']
 
 ogp_site_url = "https://qualitron.readthedocs.io/"
 
@@ -61,5 +63,8 @@ html_theme_options = {
     'github_url': 'https://github.com/qualitron/qualitron',
     'color_scheme': 'dark'
 }
+
+html_logo = '_static/qualitron.png'
+html_title = 'Qualitron'
 
 html_static_path = ['_static']

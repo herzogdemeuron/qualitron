@@ -17,7 +17,9 @@ Both are required dependencies for this extension.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Qualitron:
 
-   qualitron
+   compare
    rules
+   qualitron
+   genindex
