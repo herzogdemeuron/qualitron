@@ -86,19 +86,19 @@ class View3dCreator:
     def create(prefix='',categoryIds = [],setActive=True):
         username = revitron.DOC.Application.Username
         newViewName = prefix + username
+        viewType3D = revitron.DB.ViewType.ThreeD
         fltr = revitron.Filter().byClass('View')
         fltr = fltr.noTypes().getElements()
-        existView3ds = [v for v in fltr 
-                        if v.ViewType == revitron.DB.ViewType.ThreeD]
-        newView = [v for v in existView3ds 
-                    if v.Name == newViewName]
+        newView = [v for v in fltr 
+                                if v.ViewType == viewType3D
+                                    and v.Name == newViewName]
         if newView:
             newView = newView[0]
         else:
-            view3DType = revitron.DB.ViewFamily.ThreeDimensional
+            view3DFamily = revitron.DB.ViewFamily.ThreeDimensional
             fltr = revitron.Filter().byClass('ViewFamilyType').getElements()
             viewFamilyType = [v for v in fltr 
-                            if v.ViewFamily == view3DType][0]
+                                        if v.ViewFamily == view3DFamily][0]
             with revitron.Transaction():
                 view3D = revitron.DB.View3D         
                 newView = view3D.CreateIsometric(revitron.DOC,viewFamilyType.Id)

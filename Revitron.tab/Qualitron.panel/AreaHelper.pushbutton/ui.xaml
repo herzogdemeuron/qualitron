@@ -6,7 +6,7 @@
         SizeToContent="WidthAndHeight" ResizeMode="NoResize" 
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="False"
-        Closing="Window_Closing"
+        Closing="windowClosing"
         Topmost="True">
 
 <Window.Resources>
@@ -86,7 +86,7 @@
     <DockPanel Margin="10,30,10,10">
         <Label Content="Area Scheme: " HorizontalAlignment="Left"/>
         <ComboBox Name="combo_scheme" SelectedIndex="0" Width="150"
-        HorizontalAlignment="Right" SelectionChanged="combo_changed_scheme"
+        HorizontalAlignment="Right" SelectionChanged="comboSchemeChanged"
         />  
     </DockPanel>
 
@@ -94,7 +94,7 @@
         <Label Content="Level: " HorizontalAlignment="Left"/>
         <ComboBox
         Name="combo_level" SelectedIndex="0" Width="150"
-        HorizontalAlignment="Right" SelectionChanged="combo_changed_level"
+        HorizontalAlignment="Right" SelectionChanged="comboLevelChanged"
         />  
     </DockPanel>
 
@@ -107,14 +107,14 @@
 
     <Button
     Name="button_refresh" Grid.Column="1" Style="{StaticResource PressButton}"
-    Width="95" Height="95" Click="refresh_click"
+    Width="95" Height="95" Click="refreshClicked"
     />
 
 
     <Button
     Name="button_bake" Grid.Column="2" Style="{StaticResource PressButton}"
     HorizontalAlignment="Left" VerticalAlignment="Bottom"
-    Width="50" Height="50" Click="bake_click"
+    Width="50" Height="50" Click="bakeClicked"
     />     
 
     </Grid>

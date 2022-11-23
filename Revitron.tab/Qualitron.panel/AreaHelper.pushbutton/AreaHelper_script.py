@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import sys
 from System import Windows
 import revitron
 import pyrevit
-from qualitron import AreaHelperManager, EventManager, View3dCreator
+from qualitron import AreaHelperManager, EventManager
 import wpf
 import Autodesk.Revit.UI as ui
-from System.Collections.Generic import List
  
 doc = revitron.DOC
 db =  revitron.DB
@@ -23,39 +21,39 @@ class MainWindow(Windows.Window):
         self.bake_event = EventManager()
         self.close_event = EventManager()
         self.areaHelperCheck = False
-        self.update_status()
-        self.refresh_ui()
+        self.updateStatus()
+        self.refreshUi()
         self.combo_scheme.ItemsSource = self.areaHelperManager.AreaDict
-        self.refresh_event.set_functions(self.areaHelperManager.toggle,
-                                        self.update_status,
-                                        self.refresh_ui)
-        self.bake_event.set_functions(self.areaHelperManager.bake_dishapes,
-                                        self.update_status,
-                                        self.refresh_ui)                                
-        self.close_event.set_functions(self.areaHelperManager.remove_dishapes)
+        self.refresh_event.setFunctions(self.areaHelperManager.toggle,
+                                        self.updateStatus,
+                                        self.refreshUi)
+        self.bake_event.setFunctions(self.areaHelperManager.bakeDishapes,
+                                        self.updateStatus,
+                                        self.refreshUi)                                
+        self.close_event.setFunctions(self.areaHelperManager.removeDishapes)
 
     
-    def update_selected_areas(self):
-        self.areaHelperManager.update_areas(self.combo_scheme.SelectedValue,
+    def updateSelectedAreas(self):
+        self.areaHelperManager.updateAreas(self.combo_scheme.SelectedValue,
                                             self.combo_level.SelectedValue)
     
-    def combo_changed_scheme(self,sender,args):
+    def comboSchemeChanged(self,sender,args):
         level_list =  self.areaHelperManager.AreaDict[
                         self.combo_scheme.SelectedValue]
-        level_list = self.change_order(level_list.keys())
+        level_list = self.changeOrder(level_list.keys())
         self.combo_level.ItemsSource = level_list
-        self.update_selected_areas()
-        self.refresh_ui()
+        self.updateSelectedAreas()
+        self.refreshUi()
         self.combo_level.SelectedValue = "- ALL -"
 
-    def combo_changed_level(self,sender,args):
-        self.update_selected_areas()
-        self.refresh_ui()
+    def comboLevelChanged(self,sender,args):
+        self.updateSelectedAreas()
+        self.refreshUi()
 
-    def update_status(self):
-        self.areaHelperCheck = self.areaHelperManager.check_status()
+    def updateStatus(self):
+        self.areaHelperCheck = self.areaHelperManager.checkStatus()
 
-    def refresh_ui(self):
+    def refreshUi(self):
         if self.areaHelperCheck:
             self.button_refresh.Content = "Purge"
             self.button_bake.Content = "Bake"
@@ -83,7 +81,7 @@ class MainWindow(Windows.Window):
         self.combo_scheme.IsEnabled = comboEnable
         self.combo_level.IsEnabled = comboEnable
 
-    def change_order(self,list):
+    def changeOrder(self,list):
         """change - ALL - to first"""
         if list:
             x = "- ALL -"
@@ -96,28 +94,28 @@ class MainWindow(Windows.Window):
         else:
             return []
 
-    def refresh_click(self,sender,e):
+    def refreshClicked(self,sender,e):
         try:
-            self.areaHelperManager.update_area_dict()
-            self.update_selected_areas()
-            self.refresh_event.raise_event() 
+            self.areaHelperManager.updateAreaDict()
+            self.updateSelectedAreas()
+            self.refresh_event.raiseEvent() 
         except:
             import traceback
             print traceback.format_exc()
     
-    def bake_click(self,sender,e):
+    def bakeClicked(self,sender,e):
         try:
-            self.areaHelperManager.update_area_dict()
-            self.update_selected_areas()
-            self.bake_event.raise_event() 
+            self.areaHelperManager.updateAreaDict()
+            self.updateSelectedAreas()
+            self.bake_event.raiseEvent() 
         except:
             import traceback
             print traceback.format_exc()
   
-    def Window_Closing(self,sender,e):
+    def windowClosing(self,sender,e):
         try:
 
-            self.close_event.raise_event()
+            self.close_event.raiseEvent()
         except:
             import traceback
             print traceback.format_exc()
@@ -126,7 +124,7 @@ class MainWindow(Windows.Window):
 selection = revitron.Selection.get()
 runWindow = True
 if selection:
-    areaIds = AreaHelperManager.select_areas(selection)
+    areaIds = AreaHelperManager.selectAreas(selection)
 else:
     areaIds = []
 if areaIds:
@@ -139,7 +137,9 @@ if areaIds:
         runWindow = False
         revitron.Selection.set(areaIds)
 if runWindow:
-    doc.MassDisplayTemporaryOverride = db.MassDisplayTemporaryOverrideType.ShowMassFormAndFloors
+    doc.MassDisplayTemporaryOverride = db\
+                                    .MassDisplayTemporaryOverrideType\
+                                    .ShowMassFormAndFloors
     main = MainWindow()
     main.Show()
 

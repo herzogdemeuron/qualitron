@@ -5,9 +5,9 @@ class EventManager:
     def __init__(self):
         self.Functions = None
         self.EventInstance = None
-    def raise_event(self):
+    def raiseEvent(self):
         return self.EventInstance.Raise()
-    def set_functions(self,*functions):
+    def setFunctions(self,*functions):
         self.Functions = functions
         eventHandler = _EventHandler(functions)
         self.EventInstance = ui.ExternalEvent.Create(eventHandler)
