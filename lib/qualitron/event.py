@@ -1,6 +1,5 @@
 import Autodesk.Revit.UI as ui
 
-
 class EventManager:
     """setup functions in ui script, only for non modal ui"""
     def __init__(self):
@@ -25,4 +24,4 @@ class _EventHandler(ui.IExternalEventHandler):
                 print traceback.format_exc()
         return True
     def GetName(self):
-        return "TEST"
+        return "External Event Handler - DT"
