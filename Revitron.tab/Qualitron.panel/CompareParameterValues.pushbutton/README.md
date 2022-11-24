@@ -11,3 +11,5 @@ How To Use:
 3. Choose the parameter that you want to compare values for.
 
 > Use the *Isolate* switch to only show elements that acutally have the parameter.
+
+![default](https://media.giphy.com/media/S9cW64PmETQ9z8IA8K/giphy.gif)
