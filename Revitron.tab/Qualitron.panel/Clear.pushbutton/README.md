@@ -1,4 +1,4 @@
-# Clear
+# Clear Colors
 
 Clear all element overrides in current view.
 
