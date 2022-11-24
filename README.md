@@ -14,3 +14,5 @@ Quality control extension for Revit based on [Revitron](https://github.com/revit
 [Qualitron Developer Documentation](https://qualitron.readthedocs.io/en/latest/index.html)
 
 The Qualitron extensions requires Revitron to be installed on your system. Check out the Revitron [installation instructions](https://revitron.readthedocs.io/en/latest/get-started.html) to get started quickly.
+
+![TestCat](https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif)
