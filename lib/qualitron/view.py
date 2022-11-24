@@ -83,7 +83,7 @@ class Isolate:
 
 class View3dCreator:
     @staticmethod
-    def create(prefix='',categoryIds = [],setActive=True):
+    def create(prefix='',categoryIds=[],setActive=True):
         username = revitron.DOC.Application.Username
         newViewName = prefix + username
         viewType3D = revitron.DB.ViewType.ThreeD
@@ -96,16 +96,17 @@ class View3dCreator:
             newView = newView[0]
         else:
             view3DFamily = revitron.DB.ViewFamily.ThreeDimensional
-            fltr = revitron.Filter().byClass('ViewFamilyType').getElements()
-            viewFamilyType = [v for v in fltr 
-                                        if v.ViewFamily == view3DFamily][0]
+            viewFamilyType = [vt for vt in revitron.Filter()
+                                                    .byClass('ViewFamilyType').getElements()
+                                                    if vt.ViewFamily == view3DFamily][0]                   
             with revitron.Transaction():
                 view3D = revitron.DB.View3D         
                 newView = view3D.CreateIsometric(revitron.DOC,viewFamilyType.Id)
                 newView.Name = newViewName
         if setActive:
             revitron.UIDOC.ActiveView = newView
-            """if categoryIds:
-                with revitron.Transaction():
-                    Isolate.byCategory(categoryIds)"""
+
+            with revitron.Transaction():
+                ids = List[revitron.DB.ElementId](categoryIds)
+                newView.IsolateCategoriesTemporary(ids)
         return newView

@@ -90,11 +90,11 @@ class AreaHelperManager:
 
     def toggle(self):
         status = self.checkStatus()
-        self.set3DView()
         if status:
             self.removeDishapes()
             #self.purgeSharedParams()
         else:
+            self.set3DView()
             self.createSharedParams()
             self.createDishapes()
             
@@ -155,6 +155,7 @@ class SharedParamUtils():
         self.ParamDict = paramDict
         self.ParamSort = DB.BuiltInParameterGroup.PG_ADSK_MODEL_PROPERTIES
         self.Group = self.getGroup(groupname)
+
         massCategory = DOC.Settings.Categories.get_Item("Mass")
         self.CateSet = DOC.Application.Create.NewCategorySet()
         self.CateSet.Insert(massCategory)
@@ -360,6 +361,3 @@ class LevelItem:
         self.Elevation = level.Elevation
         above = _(level).getParameter('Story Above').getValueString()
         self.StoryAbove = None if above == "Default" else above
-     
-
-

@@ -38,7 +38,7 @@ class MainWindow(Windows.Window):
                                             self.combo_level.SelectedValue)
     
     def comboSchemeChanged(self,sender,args):
-        level_list =  self.areaHelperManager.AreaDict[
+        level_list = self.areaHelperManager.AreaDict[
                         self.combo_scheme.SelectedValue]
         level_list = self.changeOrder(level_list.keys())
         self.combo_level.ItemsSource = level_list
