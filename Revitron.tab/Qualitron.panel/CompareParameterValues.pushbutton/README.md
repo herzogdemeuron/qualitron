@@ -10,7 +10,7 @@ How To Use:
 2. Click the *Compare Parameter Values* button
 3. Choose the parameter that you want to compare values for.
 
-![default](https://media.giphy.com/media/pPAvAanKcbQp3te7FG/giphy.gif)
+![extended](https://media.giphy.com/media/pPAvAanKcbQp3te7FG/giphy.gif)
 
 > Use the *Isolate* switch to only show elements that acutally have the parameter.
 
