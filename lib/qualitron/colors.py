@@ -27,7 +27,7 @@ class Color:
 
     @staticmethod
     def RGBtoHEX(rgb):
-        return '#%02x%02x%02x' % rgb
+        return '#%02x%02x%02x' % (rgb[0], rgb[1], rgb[2])
 
     @staticmethod
     def HEXtoRGB(hex):
