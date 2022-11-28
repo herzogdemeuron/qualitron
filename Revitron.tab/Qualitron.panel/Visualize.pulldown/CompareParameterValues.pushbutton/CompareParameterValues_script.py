@@ -1,17 +1,17 @@
 import revitron
 import qualitron
 import os.path as op
+import sys
+from math import floor
+from revitron import _
+from qualitron import Parameter, Color
+from pyrevit import forms
 
 xamlFilesDir = op.dirname(__file__)
 xamlSource = 'ColorSwitchWindow.xaml'
 colorEqual = '#bfef45'
 
 def compareParameterValues(element, colorEqual):
-    import sys
-    from revitron import _
-    from qualitron import Parameter
-    from pyrevit import forms
-
     falseColors = [
             '#e6194b',
             '#ffe119',
@@ -43,9 +43,9 @@ def compareParameterValues(element, colorEqual):
         sys.exit()
 
     selectedOption = options[selectedSwitch]
-    parameterName = selectedOption.name
+    paramName = selectedOption.name
     isInstance = selectedOption.isInstance
-    value = Parameter.GetValue(element, parameterName, isInstance)
+    value = Parameter.GetValue(element, paramName, isInstance)
 
     view = revitron.ACTIVE_VIEW
     viewElements = revitron.Filter(view.Id).noTypes().getElements()
@@ -57,52 +57,68 @@ def compareParameterValues(element, colorEqual):
     paramValuesDict['colors'] = {}
     paramValuesDict['colors'][str(value)] = colorEqual
     isolateElementIds = []
-    falseColorCount = 0
+    index = 0
 
     for element in viewElements:
-        hasParameter = Parameter.Exists(element, parameterName, isInstance)
-        if hasParameter:
-            isolateElementIds.append(element.Id)
-            if _(element).getCategoryName() in ['Curtain Panels', 'Curtain Wall Mullions']:
-                try:
-                    hostId = element.Host.Id
-                    if not hostId in isolateElementIds:
-                        isolateElementIds.append(hostId)
-                except:
-                    pass
+        if not Parameter.Exists(element, paramName, isInstance):
+            continue
 
-            elementParameterValue = Parameter.GetValue(element,
-                                            parameterName,
-                                            isInstance
-                                            )
-            elementParameterValue = str(elementParameterValue)
+        isolateElementIds.append(element.Id)
+        if _(element).getCategoryName() in ['Curtain Panels', 'Curtain Wall Mullions']:
+            try:
+                hostId = element.Host.Id
+                if not hostId in isolateElementIds:
+                    isolateElementIds.append(hostId)
+            except:
+                pass
 
-            if elementParameterValue not in paramValuesDict['values']:
-                paramValuesDict['values'][elementParameterValue] = []
+        paramValue = str(Parameter.GetValue(element,
+                                            paramName,
+                                            isInstance))
 
-            paramValuesDict['values'][elementParameterValue].append(str(element.Id))
+        if paramValue not in paramValuesDict['values']:
+            paramValuesDict['values'][paramValue] = []
 
-            if elementParameterValue == value:
-                qualitron.ElementOverrides(view, element).set(colorEqualRGB, patternId)
-            else:
-                if elementParameterValue not in paramValuesDict['colors']:
-                    if falseColorCount < len(falseColors):
-                        colorDifferent = falseColors[falseColorCount]
-                    else:
-                        colorDifferent = '#000000'
+        paramValuesDict['values'][paramValue].append(str(element.Id))
 
-                    paramValuesDict['colors'][elementParameterValue] = colorDifferent
-                    falseColorCount += 1
-                else:
-                    colorDifferent = paramValuesDict['colors'][elementParameterValue]
+        if paramValue == value:
+            qualitron.ElementOverrides(view, element).set(colorEqualRGB, patternId)
+        else:
+            if paramValue not in paramValuesDict['colors']:
+                usedColorCount = len(paramValuesDict['colors'].keys())
+                defaultColorCount = len(falseColors)
+                factor = 1 - (1 / (floor(usedColorCount / defaultColorCount) + 1))
+                color = falseColors[index % len(falseColors)]
+                rgb = Color.HEXtoRGB(color)
+                rgb = tint(rgb, factor)
+                colorDifferent = Color.RGBtoHEX(rgb)
+                paramValuesDict['colors'][paramValue] = colorDifferent
+                index += 1
 
-                colorDifferentRGB = qualitron.Color.HEXtoRGB(colorDifferent)
-                qualitron.ElementOverrides(view, element).set(colorDifferentRGB, patternId)
-            
+            qualitron.ElementOverrides(view, element).set(
+                Color.HEXtoRGB(paramValuesDict['colors'][paramValue]),
+                patternId)
+
     if switches['Isolate Elements']:
         qualitron.Isolate.byElementIds(isolateElementIds)
 
     return paramValuesDict
+
+def tint(rgb, factor):
+    """
+    Lightes an rgb color by adding the remainder to white multiplied by a factor.
+
+    Args:
+        rgb (list[float]): The rgb color
+        factor (float): Multiplication factor
+
+    Returns:
+        _type_: _description_
+    """
+    newR = rgb[0] + ((255 - rgb[0]) * factor)
+    newG = rgb[1] + ((255 - rgb[1]) * factor)
+    newB = rgb[2] + ((255 - rgb[2]) * factor)
+    return [newR, newG, newB]
 
 
 with revitron.Transaction():
