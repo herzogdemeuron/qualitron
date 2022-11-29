@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Area Helper"
         SizeToContent="WidthAndHeight" ResizeMode="NoResize" 
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         ShowInTaskbar="False"
         Closing="windowClosing"
         Topmost="True"
