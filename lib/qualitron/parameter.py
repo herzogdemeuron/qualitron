@@ -80,7 +80,15 @@ class Parameter:
         if valueString:
             return valueString
         else:
-            return None
+            try:
+                string = elementParameter.getString()
+                if string:
+                    return string
+                else:
+                    return None
+            except:
+                return None
+                
 
     @staticmethod
     def Exists(element, parameterName, isInstance):
