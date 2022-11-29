@@ -322,5 +322,11 @@ class AreaHelperWindow(Windows.Window):
             import traceback
             print traceback.format_exc()
 
+    def closeClicked(self, sender, e):
+        self.Close()
+
+    def dragWindow(self, sender, e):
+        self.DragMove()
+
 
 

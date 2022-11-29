@@ -44,7 +44,7 @@ class _EventHandler(ui.IExternalEventHandler):
         """
         self.funcs = funcs
 
-    def Execute(self):
+    def Execute(self,uiapp):
         """
         Execute functions when event raised.
 
