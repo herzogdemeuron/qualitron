@@ -84,6 +84,17 @@ class Isolate:
 class View3dCreator:
     @staticmethod
     def create(prefix='',categoryIds=[],setActive=True):
+        """
+        create 3D view, isolate category at the same tiem
+
+        Args:
+            prefix (str, optional): view name prefix
+            categoryIds (list): categories to isolate
+            setActive (bool, optional): if 3D view set active
+
+        Returns:
+            obj: new 3D view
+        """
         username = revitron.DOC.Application.Username
         newViewName = prefix + username
         viewType3D = revitron.DB.ViewType.ThreeD

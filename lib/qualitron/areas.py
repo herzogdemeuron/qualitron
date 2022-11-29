@@ -4,24 +4,29 @@ import Autodesk.Revit.UI as ui
 from revitron import _
 from revitron import DB
 from revitron import DOC
-from qualitron import View3dCreator
+from qualitron import View3dCreator, SharedParamUtils
 
 class AreaHelperManager:
-    """creates and removes areaHelper instances"""
     def __init__(self):
+        """create and removes areaHelper instances"""
         self.Areas = []
         self.AreaDict = {}
         self.ParamDict = {}
         self.updateAreaDict()
         self.updateParamDict()
-        self.removeUnused()
-        self.ParamUtils = SharedParamUtils("Area Helper",self.ParamDict)
+        self._removeUnused()
+        paramGroup = revitron.DB.BuiltInParameterGroup\
+                                .PG_ADSK_MODEL_PROPERTIES
+        self.ParamUtils = SharedParamUtils("Area Helper",paramGroup)
         self.UnusedDishapeTypeIds = []
         self.Dishapes = []
         self.DishapeTypeIdsToPurge = []
 
-    def removeUnused(self):
-        allDishapes =  self.getAllDishapes()
+    def _removeUnused(self):
+        """
+        remove unused direct shapes on script startup
+        """
+        allDishapes =  self._getAllDishapes()
         usedDishapeIds = [x.GetTypeId() for x in allDishapes]
         allDishapeTypeIds = revitron.Filter().byClass('DirectShapeType').getElementIds()
         unusedDishapeTypeIds = list(set(allDishapeTypeIds) - set(usedDishapeIds))
@@ -29,7 +34,10 @@ class AreaHelperManager:
             dishapeTypeIds_icol = List[DB.ElementId](unusedDishapeTypeIds)
             DOC.Delete(dishapeTypeIds_icol)
 
-    def getAllDishapes(self):
+    def _getAllDishapes(self):
+        """
+        get all existing direct shapes
+        """
         return revitron.Filter().byClass('DirectShape').getElements()
     
     def checkStatus(self):
@@ -38,7 +46,7 @@ class AreaHelperManager:
         string rules of revitron filter sometimes dont work
         so using lookup parameter
         """
-        allDishapes =  self.getAllDishapes()
+        allDishapes =  self._getAllDishapes()
         self.Dishapes = [x for x in allDishapes
                         if _(x).get("Comments") != "Baked"]
         self.DishapeTypeIdsToPurge = [x.GetTypeId() for x in self.Dishapes]
@@ -48,7 +56,10 @@ class AreaHelperManager:
             return False
 
     def updateAreaDict(self):
-        """{area scheme name : {levelName : [areas]}"""
+        """
+        update area dict
+        {area scheme name : {levelName : [areas]}
+        """
         areaSchemes = revitron.Filter().byCategory('AreaSchemes').getElements()
         for arsch in areaSchemes:
             flr = revitron.Filter().byCategory('Areas')
@@ -70,7 +81,10 @@ class AreaHelperManager:
             self.AreaDict[arsch.Name] = dict 
 
     def updateParamDict(self):
-        """parameter list of area"""
+        """
+        update parameter dict
+        {areaParamName:dishapeParamName}
+        """
         areas = revitron.Filter().byCategory('Areas').getElements()
         if areas:
             area = areas[0]
@@ -80,15 +94,21 @@ class AreaHelperManager:
                 self.ParamDict[name] = "AreaHelper - " + name
 
     def updateAreas(self,schemeName,levelName):
-        """refreshes area dict"""
+        """refresh selected areas"""
         self.Areas = self.AreaDict.get(schemeName).get(levelName)
     
     def set3DView(self):
+        """
+        create 3D view and set active
+        """
         mass = revitron.DB.BuiltInCategory.OST_Mass
         massId = revitron.DB.ElementId(mass)
         View3dCreator.create('AreaHelper_',[massId])
 
     def toggle(self):
+        """
+        switch direct shapes
+        """
         status = self.checkStatus()
         if status:
             self.removeDishapes()
@@ -99,16 +119,23 @@ class AreaHelperManager:
             self.createDishapes()
             
     def removeDishapes(self):
+        """
+        purge dishapes
+        """
         with revitron.Transaction():
             dishapeTypeIds_icol = List[DB.ElementId](self.DishapeTypeIdsToPurge)
             DOC.Delete(dishapeTypeIds_icol)
        
     def bakeDishapes(self):
+        """
+        set comment parameter to mark a direct shape baked
+        """
         with revitron.Transaction():
             for ds in self.Dishapes:
                 _(ds).set("Comments","Baked")
 
     def createDishapes(self):
+        """create all selected direct shapes"""
         count = len(self.Areas)
         run = True
         if count > 300:
@@ -122,21 +149,37 @@ class AreaHelperManager:
             with revitron.Transaction():
                 for area in self.Areas:
                     if area.Area > 0: 
-                        areaHelper = AreaHelper(area)
+                        areaHelper = _AreaHelper(area)
                         shape = areaHelper.createDishape()
                         if shape:
-                            self.ParamUtils.writeParams(area,shape)
+                            self.ParamUtils.writeParamstoDishape(area,shape,self.ParamDict)
 
     def createSharedParams(self):
+        """create shared parameters to direct shape category"""
+        massCategory = revitron.DOC.Settings.Categories.get_Item("Mass")
         with revitron.Transaction():
-            self.ParamUtils.createParams()
+            self.ParamUtils.createParams(massCategory,
+                                        self.ParamDict.values())
 
     def purgeSharedParams(self):
+        """
+        purge shared parameters
+        WIP
+        """
         with revitron.Transaction():
             self.ParamUtils.purgeParams()
 
     @staticmethod
     def selectAreas(selected):
+        """
+        select areas according to heighlited direct shgapes
+
+        Args:
+            selected (obj): heighlited direct shapes
+
+        Returns:
+            obj: areas
+        """
         result = []
         for sel in selected:
             if sel.GetType().Name == "DirectShape":
@@ -148,102 +191,37 @@ class AreaHelperManager:
                     result.append(id)
         return result
 
-class SharedParamUtils():
-    def __init__(self, groupname, paramDict):
-        self.File = DOC.Application.OpenSharedParameterFile()
-        self.GroupName = groupname
-        self.ParamDict = paramDict
-        self.ParamSort = DB.BuiltInParameterGroup.PG_ADSK_MODEL_PROPERTIES
-        self.Group = self.getGroup(groupname)
-
-        massCategory = DOC.Settings.Categories.get_Item("Mass")
-        self.CateSet = DOC.Application.Create.NewCategorySet()
-        self.CateSet.Insert(massCategory)
-
-        groupDefinitions = self.Group.Definitions
-        self.DefiDict = {x.Name:x for x in groupDefinitions}
-
-    def getGroup(self,groupName):
-        """
-        get or create wanted parameter 
-        group in the shared parameter file
-        """
-        group = self.File.Groups.get_Item(groupName)
-        if not group:
-            group = self.File.Groups.Create(groupName)
-        return group
-
-    def getDefinition(self,name,readOnly):
-        """
-        get or create parameter definition
-        in the shared parameter file
-        """
-        if name in self.DefiDict:
-            return self.DefiDict[name]
-        else:
-            opt = DB.ExternalDefinitionCreationOptions(
-                        name, DB.SpecTypeId.String.Text)
-            opt.UserModifiable = not(readOnly)
-            sharedParamDefi = self.Group.Definitions.Create(opt)
-            self.DefiDict[name] = sharedParamDefi
-            return sharedParamDefi
-
-    def createParams(self):
-        for name in self.ParamDict:
-            #readOnly = self.ParamDict[name]
-            readOnly = True
-            sharedParamDefi = self.getDefinition(self.ParamDict[name],readOnly)
-            instanceBinding = DOC.Application.Create.NewInstanceBinding(self.CateSet)
-            DOC.ParameterBindings.Insert(sharedParamDefi,
-                                        instanceBinding,
-                                        self.ParamSort)
-    
-    def getParamFromGroup(self,diShape,paramName):
-        param = [p for p in diShape.Parameters 
-                if p.Definition.ParameterGroup == self.ParamSort
-                and p.Definition.Name == paramName] 
-        return param[0]
-
-    def writeParams(self,area,dishape):
-        for paramName in self.ParamDict:
-            value = area.LookupParameter(paramName).AsValueString()
-            target_param = self.getParamFromGroup(
-                                dishape,self.ParamDict[paramName])
-            if value:
-             target_param.Set(str(value))
-    
-    def purgeParams(self):
-        #WIP
-        defiIds = [x.Id for x in self.DefiDict.values()]
-        defiIds_icol = List[DB.ElementId](defiIds)
-        DOC.Delete(defiIds_icol)
-
-class AreaHelper:
+class _AreaHelper:
     """used to create direct shape for one area"""
     def __init__(self, area):
+        """
+        
+
+        Args:
+            area (_type_): _description_
+        """
         self.Area = area
         self.Name = "AreaHelper_" + str(area.Id.IntegerValue)
         self.doc = revitron.DOC
         self.LevelHandler = LevelHandler()
         self.Height = self.LevelHandler.getHeight(area)
 
-    def getDishapeType(self):
-        fltr = revitron.Filter().byClass('DirectShapeType')
-        fltr = fltr.byStringEquals('Type Name',self.Name).getElements()
-        dishapeType = [x.Id for x in fltr 
-                       if x.LookupParameter('Type Name')
-                       .AsValueString() == self.Name]
-        if dishapeType:
-            return dishapeType[0]
-        else:
-            return None
-
-    def deleteDishape(self):
-        type.Id = self.getDishapeType().Id
-        self.doc.Delete(type.Id)
-
+ 
+    
     def createDishape(self):
+        """loops -> solid -> direct shape"""
         def _getCrvToAppend(basept,crv):
+            """
+            if distance between two connecting points is too small,
+            then connenct start point with the next point with a line.
+
+            Args:
+                basept (obj): base point
+                crv (obj): curve after the base point
+
+            Returns:
+                obj: list of lines to be append to loop
+            """
             added_line = None
             start = crv.GetEndPoint(0)
             end = crv.GetEndPoint(1)
@@ -257,6 +235,21 @@ class AreaHelper:
                 else:
                     added_line = [DB.Line.CreateBound(basept,end)]
             return added_line
+
+        def _makeDishape(solid):
+            """create one direct shape using solid"""
+            cateId = DB.ElementId(DB.BuiltInCategory.OST_Mass)
+            lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(self.doc) 
+            shapeType = DB.DirectShapeType.Create(self.doc,self.Name ,cateId)
+            shapeType.SetShape(List[DB.GeometryObject ]([solid]))
+            lib.AddDefinitionType(self.Name,shapeType.Id)
+            element = DB.DirectShape.CreateElementInstance(
+                                                        self.doc,shapeType.Id,
+                                                        cateId,
+                                                        self.Name,
+                                                        DB.Transform.Identity)
+            element.SetTypeId(shapeType.Id)
+            return element  
 
         try:
             if self.Area.Area > 0:
@@ -289,28 +282,13 @@ class AreaHelper:
                     loops_col.Add(loop)
                 solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(
                                         loops_col,DB.XYZ.BasisZ,self.Height)
-                dishape = self.makeDishape(solid)
+                dishape = _makeDishape(solid)
                 return dishape
             
         except:
             import traceback
             print traceback.format_exc()
             print self.Area.Id
-
-    def makeDishape(self,solid):
-        """creates direct shape using solid"""
-        cateId = DB.ElementId(DB.BuiltInCategory.OST_Mass)
-        lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(self.doc) 
-        shapeType = DB.DirectShapeType.Create(self.doc,self.Name ,cateId)
-        shapeType.SetShape(List[DB.GeometryObject ]([solid]))
-        lib.AddDefinitionType(self.Name,shapeType.Id)
-        element = DB.DirectShape.CreateElementInstance(
-                                                    self.doc,shapeType.Id,
-                                                    cateId,
-                                                    self.Name,
-                                                    DB.Transform.Identity)
-        element.SetTypeId(shapeType.Id)
-        return element    
 
 class LevelHandler:
     """get level above and underneath if level items"""
@@ -354,6 +332,7 @@ class LevelHandler:
 
 class LevelItem:
     def __init__(self,level):
+        """contains infos of a level"""
         self.Level = level
         self.Name = self.Level.Name
         story = _(level).getParameter('Building Story').getInteger()
