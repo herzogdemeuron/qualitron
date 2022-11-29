@@ -1,5 +1,7 @@
 import revitron
 import qualitron
+import sys
+from pyrevit import forms
 
 
 class Warnings:
@@ -29,6 +31,12 @@ class Warnings:
         """
         viewElements = revitron.Filter(view.Id).getElementIds()
         viewWarningElements = set(viewElements).intersection(set(self.warningElements))
+
+        if len(viewWarningElements) > 500:
+            res = forms.alert(" You have over 500 elements with warnings in this view. Visualizing them might take up to a minute or longer. Do you want to continiue?",
+                                yes=True, no=True)
+            if not res:
+                sys.exit()
 
         for elementId in viewWarningElements:
             element = revitron.DOC.GetElement(elementId)
