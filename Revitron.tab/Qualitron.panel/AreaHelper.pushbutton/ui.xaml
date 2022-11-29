@@ -114,7 +114,7 @@
                     SelectionChanged="comboLevelChanged"/>  
     </DockPanel>
 
-    <Grid Margin="20">		
+    <Grid Margin="30">		
     <Grid.ColumnDefinitions>
 	<ColumnDefinition Width="*"/>
 	<ColumnDefinition Width="95"/>
