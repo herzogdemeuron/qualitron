@@ -9,6 +9,6 @@ How To Use:
 2. xxx
 3. xxx
 
-![extended](https://media.giphy.com/media/HIjW3s0oZNUSPXeVmH/giphy.gif)
+![extended](https://media.giphy.com/media/gMFnR3Rr5DPTX8gqia/giphy.gif)
 
 > xxxxx
