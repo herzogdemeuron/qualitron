@@ -34,12 +34,6 @@
                     </DataTrigger>
 
                     <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=Button}}"
-                    Value="No Selection"
-                    >
-                    <Setter Property="Fill" Value="#1c2630"/>
-                    </DataTrigger>
-
-                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=Button}}"
                     Value="Bake"
                     >
                     <Setter Property="Fill" Value="LightGray"/>
@@ -98,8 +92,6 @@
 	
 <StackPanel>
 
-    
-
     <DockPanel Margin="10,30,10,10">
         <Label Content="Area Scheme: "
                 Foreground="White"
@@ -108,18 +100,18 @@
                     SelectedIndex="0"
                     Width="150"
                     HorizontalAlignment="Right"
-                    SelectionChanged="comboSchemeChanged"
-                    Background="Yellow"/>  
+                    SelectionChanged="comboSchemeChanged"/>  
     </DockPanel>
 
     <DockPanel Margin="10">
         <Label Content="Level: "
                 HorizontalAlignment="Left"
                 Foreground="White"/>
-        <ComboBox Name="combo_level" SelectedIndex="0" Width="150"
+        <ComboBox Name="combo_level"
+                    SelectedIndex="0"
+                    Width="150"
                     HorizontalAlignment="Right"
-                    SelectionChanged="comboLevelChanged"
-                    />  
+                    SelectionChanged="comboLevelChanged"/>  
     </DockPanel>
 
     <Grid Margin="20">		
@@ -133,7 +125,6 @@
     Name="button_refresh" Grid.Column="1" Style="{StaticResource PressButton}"
     Width="95" Height="95" Click="refreshClicked"
     />
-
 
     <Button
     Name="button_bake" Grid.Column="2" Style="{StaticResource PressButton}"
