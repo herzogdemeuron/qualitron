@@ -159,6 +159,9 @@ class CompareParameterWindow(ColorSwitchWindow):
             selectionIds = [revitron.DB.ElementId(int(x)) for x in self.paramValuesDict['values'][sender.Content]]
             revitron.Selection.set(selectionIds)
 
+    def dragWindow(self, sender, arg):
+        self.DragMove()
+
 
 class AreaHelperWindow(Windows.Window):
     """
