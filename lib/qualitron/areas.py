@@ -36,17 +36,19 @@ class AreaHelperManager:
         """
         allDishapes =  self._getAllDishapes()
         usedDishapeIds = [x.GetTypeId() for x in allDishapes]
-        allDishapeTypeIds = revitron.Filter().byClass('DirectShapeType').getElementIds()
+        flr = revitron.Filter().byClass('DirectShapeType')
+        allDishapeTypeIds = flr.byCategory('Mass').getElementIds()
         unusedDishapeTypeIds = list(set(allDishapeTypeIds) - set(usedDishapeIds))
-        with revitron.Transaction():
-            dishapeTypeIds_icol = List[DB.ElementId](unusedDishapeTypeIds)
-            DOC.Delete(dishapeTypeIds_icol)
+        if unusedDishapeTypeIds:
+            with revitron.Transaction():
+                dishapeTypeIds_icol = List[DB.ElementId](unusedDishapeTypeIds)
+                DOC.Delete(dishapeTypeIds_icol)
 
     def _getAllDishapes(self):
         """
         Get all existing direct shapes.
         """
-        return revitron.Filter().byClass('DirectShape').getElements()
+        return revitron.Filter().byClass('DirectShape').byCategory('Mass').getElements()
     
     def checkStatus(self):
         """
@@ -307,8 +309,9 @@ class _AreaHelper:
             
         except:
             import traceback
-            print traceback.format_exc()
-            print self.Area.Id
+            #print traceback.format_exc()
+            print 'Area could not be generated, please clean up the area boundaries. Area Id: ' + str(self.Area.Id)
+            
 
             
 class LevelHandler:
