@@ -81,9 +81,14 @@ class Isolate:
         elementIds = List[revitron.DB.ElementId](elementIds)
         revitron.ACTIVE_VIEW.IsolateElementsTemporary(elementIds)
 
+        
 class View3dCreator:
+    """
+    Functions for 3D view creating.
+    """
+
     @staticmethod
-    def create(prefix='',categoryIds=[],setActive=True):
+    def create(prefix='' ,categoryIds=[], setActive=True):
         """
         create 3D view, isolate category at the same tiem
 

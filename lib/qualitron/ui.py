@@ -165,12 +165,19 @@ class CompareParameterWindow(ColorSwitchWindow):
 
 
 class AreaHelperWindow(Windows.Window):
-    def __init__(self,xamlfile,areaHelperManager):
+    """
+    Area Helper Window UI.
+
+    Args:
+        Windows (obj): Inherits Window
+    """
+
+    def __init__(self, xamlfile, areaHelperManager):
         """
         Shows Area Helper window.
         As a non-modal window, 
         transactions are in event manager integrated,
-        which triggers external commands.
+        which is used to trigger external commands.
 
         Args:
             xamlfile (str): xaml file path
@@ -196,15 +203,15 @@ class AreaHelperWindow(Windows.Window):
     
     def updateSelectedAreas(self):
         """
-        fetch selected areas according to combo box
+        Fetch selected areas according to combo box.
         """
         self.areaHelperManager.updateAreas(self.combo_scheme.SelectedValue,
                                             self.combo_level.SelectedValue)
     
-    def comboSchemeChanged(self,sender,args):
+    def comboSchemeChanged(self, sender, args):
         """
-        on scheme combobox changed,
-        updates level combobox and refreshed buttons
+        On scheme combobox changed,
+        updates level combobox and refreshed buttons.
         """
         level_list = self.areaHelperManager.AreaDict[
                         self.combo_scheme.SelectedValue]
@@ -212,40 +219,44 @@ class AreaHelperWindow(Windows.Window):
         self.combo_level.ItemsSource = level_list
         self.updateSelectedAreas()
         self.refreshUi()
-        self.combo_level.SelectedValue = "- ALL -"
+        self.combo_level.SelectedValue = '- ALL -'
 
-    def comboLevelChanged(self,sender,args):
-        """on level combobox changed,
-        updates area list from that level"""
+    def comboLevelChanged(self, sender, args):
+        """
+        On level combobox changed,
+        updates area list from that level
+        """
         self.updateSelectedAreas()
         self.refreshUi()
 
     def updateStatus(self):
-        """calls check status function from area helper manager"""
+        """
+        Calls check status function from area helper manager
+        """
         self.areaHelperCheck = self.areaHelperManager.checkStatus()
 
     def refreshUi(self):
         """
-        updates ui according to area helper check result
+        Updates ui according to area helper check result
         """
         if self.areaHelperCheck:
-            self.button_refresh.Content = "Purge"
-            self.button_bake.Content = "Bake"
-            self.button_refresh.Tag = ""
+            self.button_refresh.Content = 'Purge'
+            self.button_bake.Content = 'Bake'
+            self.button_refresh.Tag = ''
             refreshEnable = True
             bakeEnable = True
             comboEnable = False
         elif self.areaHelperManager.Areas:
-            self.button_refresh.Content = "Visualize"
-            self.button_bake.Content = ""
+            self.button_refresh.Content = 'Visualize'
+            self.button_bake.Content = ''
             self.button_refresh.Tag = len(self.areaHelperManager.Areas)
             refreshEnable = True
             bakeEnable = False
             comboEnable = True
         else:
-            self.button_refresh.Content = ""
-            self.button_bake.Content = ""
-            self.button_refresh.Tag = ""
+            self.button_refresh.Content = ''
+            self.button_bake.Content = ''
+            self.button_refresh.Tag = ''
             refreshEnable = False
             bakeEnable = False
             comboEnable = True
@@ -255,25 +266,26 @@ class AreaHelperWindow(Windows.Window):
         self.combo_scheme.IsEnabled = comboEnable
         self.combo_level.IsEnabled = comboEnable
 
-    def changeOrder(self,list):
+    def changeOrder(self, list):
         """
-        sorts level list,
-        adds '- ALL -' to top
+        Sort level list,
+        add '- ALL -' to top
         """
         if list:
-            x = "- ALL -"
+            x = '- ALL -'
             if x in list:
                 list.remove(x)
                 list.sort()
-                list.insert(0,x)
+                list.insert(0, x)
             return list
         else:
             return []
 
-    def refreshClicked(self,sender,e):
+    def refreshClicked(self, sender, e):
         """
-        on visualize/purge clicked,
-        raises refresh event
+        On visualize/purge clicked,
+        raises refresh event.
+        Tracebacks must be catched to avoid application crash.
         """
         try:
             self.areaHelperManager.updateAreaDict()
@@ -283,10 +295,11 @@ class AreaHelperWindow(Windows.Window):
             import traceback
             print traceback.format_exc()
     
-    def bakeClicked(self,sender,e):
+    def bakeClicked(self, sender, e):
         """
-        on bake clicked,
-        raises bake event
+        On bake clicked,
+        raises bake event.
+        Tracebacks must be catched to avoid application crash.
         """
         try:
             self.areaHelperManager.updateAreaDict()
@@ -296,10 +309,11 @@ class AreaHelperWindow(Windows.Window):
             import traceback
             print traceback.format_exc()
   
-    def windowClosing(self,sender,e):
+    def windowClosing(self, sender, e):
         """
-        on windowing closing,
-        raises event to purge not baked
+        On windowing closing,
+        raises event to purge not baked.
+        Tracebacks must be catched to avoid application crash.
         """
         try:
 

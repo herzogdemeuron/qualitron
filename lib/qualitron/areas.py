@@ -6,9 +6,17 @@ from revitron import DB
 from revitron import DOC
 from qualitron import View3dCreator, SharedParamUtils
 
+
 class AreaHelperManager:
+    """
+    Manage Area Helper instances, including create, purge and
+    write parameter values.
+    """
+
     def __init__(self):
-        """create and removes areaHelper instances"""
+        """
+        Initialize instance of the class.
+        """
         self.Areas = []
         self.AreaDict = {}
         self.ParamDict = {}
@@ -17,14 +25,14 @@ class AreaHelperManager:
         self._removeUnused()
         paramGroup = revitron.DB.BuiltInParameterGroup\
                                 .PG_ADSK_MODEL_PROPERTIES
-        self.ParamUtils = SharedParamUtils("Area Helper",paramGroup)
+        self.ParamUtils = SharedParamUtils('Area Helper', paramGroup)
         self.UnusedDishapeTypeIds = []
         self.Dishapes = []
         self.DishapeTypeIdsToPurge = []
 
     def _removeUnused(self):
         """
-        remove unused direct shapes on script startup
+        Remove unused direct shapes on script startup.
         """
         allDishapes =  self._getAllDishapes()
         usedDishapeIds = [x.GetTypeId() for x in allDishapes]
@@ -36,7 +44,7 @@ class AreaHelperManager:
 
     def _getAllDishapes(self):
         """
-        get all existing direct shapes
+        Get all existing direct shapes.
         """
         return revitron.Filter().byClass('DirectShape').getElements()
     
@@ -44,11 +52,11 @@ class AreaHelperManager:
         """
         check if any areaHelper instances exist
         string rules of revitron filter sometimes dont work
-        so using lookup parameter
+        so using lookup parameter.
         """
         allDishapes =  self._getAllDishapes()
         self.Dishapes = [x for x in allDishapes
-                        if _(x).get("Comments") != "Baked"]
+                        if _(x).get('Comments') != 'Baked']
         self.DishapeTypeIdsToPurge = [x.GetTypeId() for x in self.Dishapes]
         if self.DishapeTypeIdsToPurge:
             return True
@@ -57,7 +65,7 @@ class AreaHelperManager:
 
     def updateAreaDict(self):
         """
-        update area dict
+        Update area dict.
         {area scheme name : {levelName : [areas]}
         """
         areaSchemes = revitron.Filter().byCategory('AreaSchemes').getElements()
@@ -69,8 +77,8 @@ class AreaHelperManager:
                     and x.AreaScheme.Id == arsch.Id]
             dict = {}
             if areas:
-                """conclude areas to level ALL"""
-                dict["- ALL -"] = areas
+                """Conclude areas to level ALL"""
+                dict['- ALL -'] = areas
             for area in areas:
                 levelName = area.Level.Name
                 if not levelName in dict:
@@ -82,7 +90,7 @@ class AreaHelperManager:
 
     def updateParamDict(self):
         """
-        update parameter dict
+        Update parameter dict.
         {areaParamName:dishapeParamName}
         """
         areas = revitron.Filter().byCategory('Areas').getElements()
@@ -91,23 +99,25 @@ class AreaHelperManager:
             for param in area.Parameters:
                 name = param.Definition.Name
                 readOnly = param.IsReadOnly
-                self.ParamDict[name] = "AreaHelper - " + name
+                self.ParamDict[name] = 'AreaHelper - ' + name
 
-    def updateAreas(self,schemeName,levelName):
-        """refresh selected areas"""
+    def updateAreas(self, schemeName, levelName):
+        """
+        Refresh selected areas.
+        """
         self.Areas = self.AreaDict.get(schemeName).get(levelName)
     
     def set3DView(self):
         """
-        create 3D view and set active
+        Create 3D view and set active.
         """
         mass = revitron.DB.BuiltInCategory.OST_Mass
         massId = revitron.DB.ElementId(mass)
-        View3dCreator.create('AreaHelper_',[massId])
+        View3dCreator.create('AreaHelper_', [massId])
 
     def toggle(self):
         """
-        switch direct shapes
+        Switch direct shapes.
         """
         status = self.checkStatus()
         if status:
@@ -120,7 +130,7 @@ class AreaHelperManager:
             
     def removeDishapes(self):
         """
-        purge dishapes
+        Purge dishapes.
         """
         with revitron.Transaction():
             dishapeTypeIds_icol = List[DB.ElementId](self.DishapeTypeIdsToPurge)
@@ -128,19 +138,21 @@ class AreaHelperManager:
        
     def bakeDishapes(self):
         """
-        set comment parameter to mark a direct shape baked
+        Set comment parameter to mark a direct shape baked.
         """
         with revitron.Transaction():
             for ds in self.Dishapes:
-                _(ds).set("Comments","Baked")
+                _(ds).set('Comments', 'Baked')
 
     def createDishapes(self):
-        """create all selected direct shapes"""
+        """
+        Create all selected direct shapes.
+        """
         count = len(self.Areas)
         run = True
         if count > 300:
-            decide = ui.TaskDialog.Show("AreaHelper","Visualize " + str(count) 
-                                        + " areas?\nThis may take a long time.",
+            decide = ui.TaskDialog.Show('AreaHelper', 'Visualize ' + str(count) 
+                                        + ' areas?\nThis may take a long time.',
                                         ui.TaskDialogCommonButtons.Yes|
                                         ui.TaskDialogCommonButtons.No)
             if decide == ui.TaskDialogResult.No:
@@ -152,13 +164,15 @@ class AreaHelperManager:
                         areaHelper = _AreaHelper(area)
                         shape = areaHelper.createDishape()
                         if shape:
-                            self.ParamUtils.writeParamstoDishape(area,shape,self.ParamDict)
+                            self.ParamUtils.writeParamstoDishape(area, shape, self.ParamDict)
 
     def createSharedParams(self):
-        """create shared parameters to direct shape category"""
-        massCategory = revitron.DOC.Settings.Categories.get_Item("Mass")
+        """
+        Create shared parameters to direct shape category.
+        """
+        massCategory = revitron.DOC.Settings.Categories.get_Item('Mass')
         with revitron.Transaction():
-            self.ParamUtils.createParams(massCategory,
+            self.ParamUtils.createParams(massCategory, 
                                         self.ParamDict.values())
 
     def purgeSharedParams(self):
@@ -172,55 +186,59 @@ class AreaHelperManager:
     @staticmethod
     def selectAreas(selected):
         """
-        select areas according to heighlited direct shgapes
+        Select areas according to heighlited direct shgapes.
 
         Args:
-            selected (obj): heighlited direct shapes
+            selected (obj): Heighlited direct shapes
 
         Returns:
-            obj: areas
+            obj: Areas
         """
         result = []
         for sel in selected:
-            if sel.GetType().Name == "DirectShape":
+            if sel.GetType().Name == 'DirectShape':
                 type = DOC.GetElement(sel.GetTypeId())
-                typeName = _(type).get("Type Name")
-                if typeName.startswith("AreaHelper_"):
-                    id = int(typeName.strip("AreaHelper_"))
+                typeName = _(type).get('Type Name')
+                if typeName.startswith('AreaHelper_'):
+                    id = int(typeName.strip('AreaHelper_'))
                     id = DB.ElementId(id)
                     result.append(id)
         return result
 
+    
 class _AreaHelper:
-    """used to create direct shape for one area"""
+    """
+    Used to create direct shape for one area.
+    """
     def __init__(self, area):
         """
-        
-
+        Initialize an area helper instance related to an area.
         Args:
-            area (_type_): _description_
+            area (_type_): Revit area instance.
         """
         self.Area = area
-        self.Name = "AreaHelper_" + str(area.Id.IntegerValue)
+        self.Name = 'AreaHelper_' + str(area.Id.IntegerValue)
         self.doc = revitron.DOC
         self.LevelHandler = LevelHandler()
         self.Height = self.LevelHandler.getHeight(area)
-
- 
     
     def createDishape(self):
-        """loops -> solid -> direct shape"""
-        def _getCrvToAppend(basept,crv):
+        """
+        Loops -> solid -> direct shape.
+        """
+        def _getCrvToAppend(basept, crv):
             """
-            if distance between two connecting points is too small,
-            then connenct start point with the next point with a line.
+            When connecting the start point of a curve with the
+            end point of the last curve:
+            If distance between two connecting points is too small,
+            then try the end point.
 
             Args:
-                basept (obj): base point
-                crv (obj): curve after the base point
+                basept (obj): Base point
+                crv (obj): Curve after the base point
 
             Returns:
-                obj: list of lines to be append to loop
+                obj: List of lines to be append to loop
             """
             added_line = None
             start = crv.GetEndPoint(0)
@@ -230,22 +248,24 @@ class _AreaHelper:
                 if dist == 0:
                     added_line = [crv]
                 elif crv.Length > 0.0025 and dist > 0.0025:
-                    added_line = [DB.Line.CreateBound(basept,start)]
+                    added_line = [DB.Line.CreateBound(basept, start)]
                     added_line.append(crv)
                 else:
-                    added_line = [DB.Line.CreateBound(basept,end)]
+                    added_line = [DB.Line.CreateBound(basept, end)]
             return added_line
 
         def _makeDishape(solid):
-            """create one direct shape using solid"""
+            """
+            Create a direct shape using solid.
+            """
             cateId = DB.ElementId(DB.BuiltInCategory.OST_Mass)
             lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(self.doc) 
-            shapeType = DB.DirectShapeType.Create(self.doc,self.Name ,cateId)
+            shapeType = DB.DirectShapeType.Create(self.doc, self.Name , cateId)
             shapeType.SetShape(List[DB.GeometryObject ]([solid]))
-            lib.AddDefinitionType(self.Name,shapeType.Id)
+            lib.AddDefinitionType(self.Name, shapeType.Id)
             element = DB.DirectShape.CreateElementInstance(
-                                                        self.doc,shapeType.Id,
-                                                        cateId,
+                                                        self.doc, shapeType.Id, 
+                                                        cateId, 
                                                         self.Name,
                                                         DB.Transform.Identity)
             element.SetTypeId(shapeType.Id)
@@ -262,7 +282,7 @@ class _AreaHelper:
                         segCrv = seg.GetCurve()
                         if loop.NumberOfCurves() == 0:
                             basePt = segCrv.GetEndPoint(0)
-                        crvs_to_append = _getCrvToAppend(basePt,segCrv)
+                        crvs_to_append = _getCrvToAppend(basePt, segCrv)
             
                         if crvs_to_append:
                             if loop.NumberOfCurves() == 0:
@@ -274,14 +294,14 @@ class _AreaHelper:
 
                     if loop.IsOpen():
                         if finalPt.DistanceTo(basePt) > 0.0025:
-                            line = DB.Line.CreateBound(basePt,finalPt)
+                            line = DB.Line.CreateBound(basePt, finalPt)
                         else:
-                            line = DB.Line.CreateBound(basePt,backPt)
+                            line = DB.Line.CreateBound(basePt, backPt)
                         loop.Append(line)
 
                     loops_col.Add(loop)
                 solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(
-                                        loops_col,DB.XYZ.BasisZ,self.Height)
+                                        loops_col, DB.XYZ.BasisZ, self.Height)
                 dishape = _makeDishape(solid)
                 return dishape
             
@@ -290,9 +310,16 @@ class _AreaHelper:
             print traceback.format_exc()
             print self.Area.Id
 
+            
 class LevelHandler:
-    """get level above and underneath if level items"""
+    """
+    Functions for handling level infos.
+    """
+
     def __init__(self):
+        """
+        Initialize a level handler instance by creating level items for all levels.
+        """
         self.LevelItems = [LevelItem(l) for l in
                                         revitron.Filter().byCategory('Levels')
                                         .noTypes().getElements()]
@@ -300,8 +327,8 @@ class LevelHandler:
 
     def getHeight(self,area):
         """
-        get height of area based on this level
-        by default 3 meters
+        Get height of area based on this level,
+        by default 3 meters.
         """
         levelItem = self.Dict[area.Level.Name]
         aboveLevelItem = None
@@ -315,10 +342,10 @@ class LevelHandler:
             height = 3.28084*3
         return height
 
-    def getAbove(self,levelItem):
+    def getAbove(self, levelItem):
         """
-        get the name of the first story level above the given level
-        if not found, return None
+        Get the name of the first story level above the given level,
+        if not found, return None.
         """
         resultItem = None
         for l in self.LevelItems:
@@ -330,9 +357,19 @@ class LevelHandler:
                     resultItem = l
         return resultItem
 
+    
 class LevelItem:
-    def __init__(self,level):
-        """contains infos of a level"""
+    """
+    Contains infos of a level.
+    """
+
+    def __init__(self, level):
+        """
+        Initialize a level item instance.
+
+        Args:
+            level (obj): Revit level instance.
+        """
         self.Level = level
         self.Name = self.Level.Name
         story = _(level).getParameter('Building Story').getInteger()

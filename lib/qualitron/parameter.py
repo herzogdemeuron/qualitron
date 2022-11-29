@@ -114,57 +114,61 @@ class Parameter:
             return revitron.Parameter(elementType, parameterName).exists()
         
 class SharedParamUtils():
-    def __init__(self, groupname,paramGroup):
+    """
+    A utility class of functions related to shared parameter. 
+    """
+
+    def __init__(self, groupname, paramGroup):
         """
-        creates/writes shared parameters
+        Initialize class instance with necassary infos related to shared parameters.
 
         Args:
-            groupname (str): shared parameter group name in the text file
+            groupname (str): Shared parameter group name in the text file
             paramGroup (obj): BuiltInParameterGroup of the instance for creating/writing
         """
-
         self.File = revitron.DOC.Application.OpenSharedParameterFile()
         self.ParamGroup = paramGroup
         self.Group = self._getGroup(groupname)
         groupDefinitions = self.Group.Definitions
         self.DefiDict = {x.Name:x for x in groupDefinitions}
 
-    def _getGroup(self,groupName):
+    def _getGroup(self, groupName):
         """
-        get or create wanted parameter group
-        in the shared parameter file
+        Get or create wanted parameter group
+        in the shared parameter file.
         """
         group = self.File.Groups.get_Item(groupName)
         if not group:
             group = self.File.Groups.Create(groupName)
         return group
 
-    def _getDefinition(self,name,readOnly,
+    def _getDefinition(self, name, readOnly,
                     paramType=revitron.DB.SpecTypeId.String.Text):
         """
-        get or create parameter definition
+        Get or create parameter definition
         in the shared parameter file
         """
         if name in self.DefiDict:
             return self.DefiDict[name]
         else:
-            opt = revitron.DB.ExternalDefinitionCreationOptions(name,paramType)
+            opt = revitron.DB.ExternalDefinitionCreationOptions(name, paramType)
             opt.UserModifiable = not(readOnly)
             sharedParamDefi = self.Group.Definitions.Create(opt)
             self.DefiDict[name] = sharedParamDefi
             return sharedParamDefi
 
-    def createParams(self,category,paramNames,readOnly=True):
-        """creates shared parameter to category instances
+    def createParams(self, category, paramNames, readOnly=True):
+        """
+        Create shared parameter to category instances.
 
         Args:
-            category (obj): target category
-            paramGroup (obj): parameter group of instance property
-            paramNames (list): list of parameter names to create
-            readOnly (bool, optional): if the paramer should be user modifible
+            category (obj): Target category
+            paramGroup (obj): Parameter group of instance property
+            paramNames (list): List of parameter names to create
+            readOnly (bool, optional): If the paramer should be user modifible
         """
         for name in paramNames:
-            sharedParamDefi = self._getDefinition(name,readOnly)
+            sharedParamDefi = self._getDefinition(name, readOnly)
             cateSet = revitron.DOC.Application.Create.NewCategorySet()
             cateSet.Insert(category)
             instanceBinding = revitron.DOC.Application.Create.NewInstanceBinding(cateSet)
@@ -172,32 +176,31 @@ class SharedParamUtils():
                                                 instanceBinding,
                                                 self.ParamGroup)
     
-    def _getParamFromGroup(self,instance,paramName):
-        """
-        gets the first parameter of an instance
-        in a specific parameter group with parameter name
+    def _getParamFromGroup(self, instance, paramName):
+        """""
+        Get the first parameter of an instance
+        in a specific parameter group with parameter name.
 
         Args:
-            instance (obj): instance
-            paramGroup (obj): parameter group of instance property
-            paramName (_type_): name of target parameter
+            instance (obj): Instance
+            paramName (str): Name of target parameter
 
         Returns:
-            parameter object
-        """
+            object: Parameter object
+        """""
         param = [p for p in instance.Parameters 
                 if p.Definition.ParameterGroup == self.ParamGroup
                 and p.Definition.Name == paramName] 
         return param[0]
 
-    def writeParamstoDishape(self,area,dishape,paramDict):
+    def writeParamstoDishape(self, area, dishape, paramDict):
         """
-        copies parameter values from area to direct shape instance
+        Copy parameter values from area to direct shape instance.
 
         Args:
-            area (obj): source area instance
-            dishape (obj): target direct shape instance
-            paramDict (dict): dictionary {parameter name in area: parameter name in direct shape}
+            area (obj): Source area instance
+            dishape (obj):Target direct shape instance
+            paramDict (dict): Dictionary {parameter name in area: parameter name in direct shape}
         """
         for paramName,targetName in paramDict.items():
             value = area.LookupParameter(paramName).AsValueString()
