@@ -11,19 +11,9 @@ clr.AddReference('System')
 from System.Windows.Media import BrushConverter
 
 
-
-
-
 class ColorSwitchWindow(forms.CommandSwitchWindow):
     """
     Extended form to select from a list of command options.
-
-    Args:
-        context (list[str]): list of command options to choose from
-        switches (list[str]): list of on/off switches
-        message (str): window title message
-        config (dict): dictionary of config dicts for options or switches
-        recognize_access_key (bool): recognize '_' as mark of access key
     """
 
     def __init__(self,
@@ -47,7 +37,6 @@ class ColorSwitchWindow(forms.CommandSwitchWindow):
         self._context = context
         self.response = None
 
-        # parent window?
         owner = kwargs.get('owner', None)
         if owner:
             # set wpf windows directly
@@ -106,6 +95,10 @@ class ColorSwitchWindow(forms.CommandSwitchWindow):
 
 
 class CompareParameterWindow(ColorSwitchWindow):
+    """
+    Extended form to select from a list of command options.
+    Selects elements at button click.
+    """
 
     def __init__(self,
                 context,
@@ -157,7 +150,10 @@ class CompareParameterWindow(ColorSwitchWindow):
         dlg.Show()
 
     def process_option(self, sender, args):    #pylint: disable=W0613
-        """Handle click on command option button."""
+        """
+        Handle click on command option button. 
+        Closes the window and selects all elements with the value of the selected button.
+        """
         self.Close()
         if sender:
             selectionIds = [revitron.DB.ElementId(int(x)) for x in self.paramValuesDict['values'][sender.Content]]
