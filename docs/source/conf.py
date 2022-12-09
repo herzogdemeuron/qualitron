@@ -34,7 +34,7 @@ extensions = [
     'sphinx.ext.coverage',
 ]
 
-autodoc_mock_imports = ['revitron', 'pyrevit', 'Autodesk', 'clr', 'System', 'Microsoft']
+autodoc_mock_imports = ['revitron', 'pyrevit', 'Autodesk', 'clr', 'System', 'Microsoft', 'wpf']
 
 add_module_names = False
 
