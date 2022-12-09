@@ -292,7 +292,7 @@ class AreaHelperWindow(Windows.Window):
             self.refresh_event.raiseEvent() 
         except:
             import traceback
-            print traceback.format_exc()
+            print(traceback.format_exc())
     
     def bakeClicked(self, sender, e):
         """
@@ -306,7 +306,7 @@ class AreaHelperWindow(Windows.Window):
             self.bake_event.raiseEvent() 
         except:
             import traceback
-            print traceback.format_exc()
+            print(traceback.format_exc())
   
     def windowClosing(self, sender, e):
         """
@@ -319,7 +319,7 @@ class AreaHelperWindow(Windows.Window):
             self.close_event.raiseEvent()
         except:
             import traceback
-            print traceback.format_exc()
+            print(traceback.format_exc())
 
     def closeClicked(self, sender, e):
         self.Close()
