@@ -44,7 +44,7 @@ class _EventHandler(ui.IExternalEventHandler):
         """
         self.funcs = funcs
 
-    def Execute(self,uiapp):
+    def Execute(self, uiapp):
         """
         Execute functions when event raised.
 
@@ -56,7 +56,7 @@ class _EventHandler(ui.IExternalEventHandler):
                 func()
             except:
                 import traceback
-                print traceback.format_exc()
+                print(traceback.format_exc())
         return True
     
     def GetName(self):
