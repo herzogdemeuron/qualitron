@@ -14,7 +14,9 @@ Submodules
    :maxdepth: 4
 
    qualitron.analyze
+   qualitron.areas
    qualitron.colors
+   qualitron.event
    qualitron.parameter
    qualitron.providers
    qualitron.ui
