@@ -308,9 +308,7 @@ class _AreaHelper:
                 return dishape
             
         except:
-            import traceback
-            #print traceback.format_exc()
-            print 'Area could not be generated, please clean up the area boundaries. Area Id: ' + str(self.Area.Id)
+            print('Area could not be generated, please clean up the area boundaries. Area Id: ' + str(self.Area.Id))
             
 
             
