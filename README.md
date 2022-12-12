@@ -8,7 +8,7 @@ Quality control extension for Revit based on [Revitron](https://github.com/revit
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/qualitron/qualitron?color=222222)
 ![](https://img.shields.io/badge/Revit-2022-222222)
 
-> :point_up: Note that this extension is only tested on Revit `2022`, but may as well work on other versions.
+> :point_up: Note that this extension is only tested on Revit `2021` and `2022`, but may as well work on other versions.
 
 ## Docs
 [Qualitron Developer Documentation](https://qualitron.readthedocs.io/en/latest/index.html)
