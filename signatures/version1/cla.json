@@ -1,3 +1,12 @@
 {
-   "signedContributors": []
+  "signedContributors": [
+    {
+      "name": "yss-hdm",
+      "id": 120189883,
+      "comment_id": 1346240840,
+      "created_at": "2022-12-12T10:30:48Z",
+      "repoId": 539851951,
+      "pullRequestNo": 4
+    }
+  ]
 }
