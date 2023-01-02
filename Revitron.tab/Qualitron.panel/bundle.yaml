@@ -3,3 +3,4 @@ layout:
   - Visualize[title:Visualize]
   - Clear[title:Clear Colors]
   - AreaHelper[title:Area Helper]
+  - RoomHelper[title:Room Helper]

@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     # Select areas function
     if selection:
-        areaIds = AreaHelperManager.selectTargets(selection)
+        areaIds = AreaHelperManager.selectAreas(selection)
         if areaIds:
             count = str(len(areaIds))
             decide = ui.TaskDialog.Show("AreaHelper","Select " + count + " area(s)?",

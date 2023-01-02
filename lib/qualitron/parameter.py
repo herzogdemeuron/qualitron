@@ -139,14 +139,15 @@ class SharedParamUtils():
         return group
 
     def _getDefinition(self, name, readOnly):
-        try:
-            paramType = revitron.DB.SpecTypeId.String.Text
-        except:
-            paramType = revitron.DB.ParameterType.Text
         """
         Get or create parameter definition
         in the shared parameter file
         """
+        try:
+            paramType = revitron.DB.SpecTypeId.String.Text
+        except:
+            paramType = revitron.DB.ParameterType.Text
+            
         if name in self.DefiDict:
             return self.DefiDict[name]
         else:
