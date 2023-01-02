@@ -14,9 +14,9 @@ class SpacesHelperManager(object):
         self.ParamDict = {}
         self.HelperClass = helperClass
         self.CategoryStr = categoryStr
+        self.Prefix = categoryStr + 'Helper_'
         self.updateParamDict()
         self._removeUnused()
-        self.Prefix = categoryStr + 'Helper_'
         paramGroup = revitron.DB.BuiltInParameterGroup\
                                 .PG_ADSK_MODEL_PROPERTIES
         self.ParamUtils = SharedParamUtils(self.Prefix, paramGroup)
@@ -88,8 +88,8 @@ class SpacesHelperManager(object):
             self.removeDishapes()
             #self.purgeSharedParams()--WIP
         else:
+            self.set3DView()
             with revitron.Transaction():
-                self.set3DView()
                 self.createSharedParams()
                 self.createDishapes()
             
@@ -187,7 +187,7 @@ class AreasHelperManager(SpacesHelperManager):
         """
         Initialize instance of the class.
         """
-        super(SpacesHelperManager, self).__init__('Areas', AreaHelper)
+        super(AreasHelperManager, self).__init__('Areas', AreaHelper)
         self.AreaDict = {}
         self.updateAreaDict()
 
@@ -223,6 +223,7 @@ class AreasHelperManager(SpacesHelperManager):
         """
         self.Source = self.AreaDict.get(schemeName).get(levelName)
 
+
 class RoomsHelperManager(SpacesHelperManager):
     def __init__(self):
         """
@@ -231,7 +232,6 @@ class RoomsHelperManager(SpacesHelperManager):
         super(RoomsHelperManager, self).__init__('Rooms', RoomHelper)
         self.RoomDict = {}
         self.updateRoomDict()
-
 
     def updateRoomDict(self):
         """
@@ -269,26 +269,23 @@ class SpaceHelper(object):
         """
         self.Elem = elem
         self.Name = prefix + str(elem.Id.IntegerValue)
-        self.doc = revitron.DOC
-        
 
     def makeDishape(self, solid):
         """
         Create a direct shape using solid.
         """
         cateId = DB.ElementId(DB.BuiltInCategory.OST_Mass)
-        lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(self.doc) 
-        shapeType = DB.DirectShapeType.Create(self.doc, self.Name , cateId)
+        lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(DOC) 
+        shapeType = DB.DirectShapeType.Create(DOC, self.Name , cateId)
         shapeType.SetShape(List[DB.GeometryObject ]([solid]))
         lib.AddDefinitionType(self.Name, shapeType.Id)
         element = DB.DirectShape.CreateElementInstance(
-                                                    self.doc, shapeType.Id, 
+                                                    DOC, shapeType.Id, 
                                                     cateId, 
                                                     self.Name,
                                                     DB.Transform.Identity)
         element.SetTypeId(shapeType.Id)
         return element 
-
 
    
 class AreaHelper(SpaceHelper):
@@ -301,30 +298,9 @@ class AreaHelper(SpaceHelper):
         Args:
             area (_type_): Revit area instance.
         """
-        super(SpaceHelper, self).__init__(area, 'AreasHelper')
-
-        self.Area = area
-        self.Name = 'AreaHelper_' + str(area.Id.IntegerValue)
-        self.doc = revitron.DOC
+        super(AreaHelper, self).__init__(area, 'AreasHelper_')
         self.LevelHandler = LevelHandler()
         self.Height = self.LevelHandler.getHeight(area)
-
-    def makeDishape(self, solid):
-        """
-        Create a direct shape using solid.
-        """
-        cateId = DB.ElementId(DB.BuiltInCategory.OST_Mass)
-        lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(self.doc) 
-        shapeType = DB.DirectShapeType.Create(self.doc, self.Name , cateId)
-        shapeType.SetShape(List[DB.GeometryObject ]([solid]))
-        lib.AddDefinitionType(self.Name, shapeType.Id)
-        element = DB.DirectShape.CreateElementInstance(
-                                                    self.doc, shapeType.Id, 
-                                                    cateId, 
-                                                    self.Name,
-                                                    DB.Transform.Identity)
-        element.SetTypeId(shapeType.Id)
-        return element 
 
     def createDishape(self):
         """
@@ -359,9 +335,9 @@ class AreaHelper(SpaceHelper):
             return added_line
 
         try:
-            if self.Area.Area > 0:
+            if self.Elem.Area > 0:
                 seopt = DB.SpatialElementBoundaryOptions()
-                segments = self.Area.GetBoundarySegments(seopt)
+                segments = self.Elem.GetBoundarySegments(seopt)
                 loops_col = List[DB.CurveLoop]([])
                 for segmentList in segments:
                     loop = DB.CurveLoop()
@@ -393,113 +369,8 @@ class AreaHelper(SpaceHelper):
                 return dishape
             
         except:
-            print('Area could not be generated, please clean up the area boundaries. Area Id: ' + str(self.Area.Id))
-            
-
-
-
-class AreaHelper(object):
-    """
-    Used to create direct shape for one area.
-    """
-    def __init__(self, area):
-        """
-        Initialize an area helper instance related to an area.
-        Args:
-            area (_type_): Revit area instance.
-        """
-        self.Area = area
-        self.Name = 'AreaHelper_' + str(area.Id.IntegerValue)
-        self.doc = revitron.DOC
-        self.LevelHandler = LevelHandler()
-        self.Height = self.LevelHandler.getHeight(area)
-
-    def makeDishape(self, solid):
-        """
-        Create a direct shape using solid.
-        """
-        cateId = DB.ElementId(DB.BuiltInCategory.OST_Mass)
-        lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(self.doc) 
-        shapeType = DB.DirectShapeType.Create(self.doc, self.Name , cateId)
-        shapeType.SetShape(List[DB.GeometryObject ]([solid]))
-        lib.AddDefinitionType(self.Name, shapeType.Id)
-        element = DB.DirectShape.CreateElementInstance(
-                                                    self.doc, shapeType.Id, 
-                                                    cateId, 
-                                                    self.Name,
-                                                    DB.Transform.Identity)
-        element.SetTypeId(shapeType.Id)
-        return element 
-
-    def createDishape(self):
-        """
-        Loops -> solid -> direct shape.
-        """
-        def _getCrvToAppend(basept, crv):
-            """
-            When connecting the start point of a curve with the
-            end point of the last curve:
-            If distance between two connecting points is too small,
-            then try the end point.
-
-            Args:
-                basept (obj): Base point
-                crv (obj): Curve after the base point
-
-            Returns:
-                obj: List of lines to be append to loop
-            """
-            added_line = None
-            start = crv.GetEndPoint(0)
-            end = crv.GetEndPoint(1)
-            if basept.DistanceTo(end) > 0.0025:
-                dist = start.DistanceTo(basept)
-                if dist == 0:
-                    added_line = [crv]
-                elif crv.Length > 0.0025 and dist > 0.0025:
-                    added_line = [DB.Line.CreateBound(basept, start)]
-                    added_line.append(crv)
-                else:
-                    added_line = [DB.Line.CreateBound(basept, end)]
-            return added_line
-
-        try:
-            if self.Area.Area > 0:
-                seopt = DB.SpatialElementBoundaryOptions()
-                segments = self.Area.GetBoundarySegments(seopt)
-                loops_col = List[DB.CurveLoop]([])
-                for segmentList in segments:
-                    loop = DB.CurveLoop()
-                    for seg in segmentList:
-                        segCrv = seg.GetCurve()
-                        if loop.NumberOfCurves() == 0:
-                            basePt = segCrv.GetEndPoint(0)
-                        crvs_to_append = _getCrvToAppend(basePt, segCrv)
-            
-                        if crvs_to_append:
-                            if loop.NumberOfCurves() == 0:
-                                finalPt = segCrv.GetEndPoint(0)
-                            for c in crvs_to_append:
-                                loop.Append(c)
-                            backPt = segCrv.GetEndPoint(0)
-                            basePt = segCrv.GetEndPoint(1)
-
-                    if loop.IsOpen():
-                        if finalPt.DistanceTo(basePt) > 0.0025:
-                            line = DB.Line.CreateBound(basePt, finalPt)
-                        else:
-                            line = DB.Line.CreateBound(basePt, backPt)
-                        loop.Append(line)
-
-                    loops_col.Add(loop)
-                solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(
-                                        loops_col, DB.XYZ.BasisZ, self.Height)
-                dishape = self.makeDishape(solid)
-                return dishape
-            
-        except:
-            print('Area could not be generated, please clean up the area boundaries. Area Id: ' + str(self.Area.Id))
-            
+            print('Area could not be generated, please clean up the area boundaries. Area Id: ' + str(self.Elem.Id))
+        
 
 class RoomHelper(SpaceHelper):
     """
@@ -511,14 +382,12 @@ class RoomHelper(SpaceHelper):
         Args:
             area (_type_): Revit area instance.
         """
-        self.Room = room
-        self.Name = 'RoomHelper_' + str(room.Id.IntegerValue)
-        self.doc = revitron.DOC
+        super(AreaHelper, self).__init__(room, 'RoomsHelper_')
         self._opt = revitron.DB.Options()
 
     def getSolid(self):
         result = None
-        geomobjs = self.Room.get_Geometry(self._opt)
+        geomobjs = self.Elem.get_Geometry(self._opt)
         for item in geomobjs:
             type =  item.ToString()
             if "Solid" in type and item.Volume > 0: 
@@ -585,7 +454,6 @@ class LevelHandler:
                 else:
                     resultItem = l
         return resultItem
-
     
 class LevelItem:
     """
