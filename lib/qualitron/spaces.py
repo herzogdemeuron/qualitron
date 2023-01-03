@@ -7,21 +7,25 @@ from revitron import DOC
 from qualitron import View3dCreator, SharedParamUtils
 
 
-class SpacesHelperManager(object):
-
+class SpaceHelperManager(object):
     def __init__(self, categoryStr, helperClass):
-        self.Source = []
-        self.ParamDict = {}
+        self.Target = []    # List of selected areas/rooms
+        self.MainDict = {}  # Dict for all areas/rooms
+        self.ParamDict = {} # Dict for instance params
+
         self.HelperClass = helperClass
         self.CategoryStr = categoryStr
         self.Prefix = categoryStr + 'Helper_'
-        self.updateParamDict()
-        self._removeUnused()
+
         paramGroup = revitron.DB.BuiltInParameterGroup\
                                 .PG_ADSK_MODEL_PROPERTIES
         self.ParamUtils = SharedParamUtils(self.Prefix, paramGroup)
+
         self.Dishapes = []
         self.DishapeTypeIdsToPurge = []
+
+        self.updateParamDict()
+        self._removeUnused()
 
     def _removeUnused(self):
         """
@@ -124,12 +128,12 @@ class SpacesHelperManager(object):
         """
         Create all selected direct shapes.
         """
-        count = len(self.Source)
+        count = len(self.Target)
         run = True
         if count > 300:
             run = self.showWarning(count)
         if run:
-            for elem in self.Source:
+            for elem in self.Target:
                 helper = self.HelperClass(elem)
                 shape = helper.createDishape()
                 if shape:
@@ -177,7 +181,7 @@ class SpacesHelperManager(object):
         return result
 
 
-class AreasHelperManager(SpacesHelperManager):
+class AreasHelperManager(SpaceHelperManager):
     """
     Manage Area Helper instances, including create, purge and
     write parameter values.
@@ -188,12 +192,11 @@ class AreasHelperManager(SpacesHelperManager):
         Initialize instance of the class.
         """
         super(AreasHelperManager, self).__init__('Areas', AreaHelper)
-        self.AreaDict = {}
-        self.updateAreaDict()
+        self.updateMainDict()
 
-    def updateAreaDict(self):
+    def updateMainDict(self):
         """
-        Update area dict.
+        Update dict for all areas.
         {area scheme name : {levelName : [areas]}
         """
         flr = revitron.Filter()
@@ -215,27 +218,27 @@ class AreasHelperManager(SpacesHelperManager):
                     dict[levelName] = []
                 list = dict.get(levelName)
                 list.append(area)
-            self.AreaDict[arsch.Name] = dict 
+            self.MainDict[arsch.Name] = dict 
 
-    def updateAreas(self, schemeName, levelName):
+    def updateTarget(self, schemeName, levelName):
         """
         Refresh selected areas.
         """
-        self.Source = self.AreaDict.get(schemeName).get(levelName)
+        self.Target = self.MainDict.get(schemeName).get(levelName)
 
 
-class RoomsHelperManager(SpacesHelperManager):
+class RoomsHelperManager(SpaceHelperManager):
     def __init__(self):
         """
         Initialize instance of the class.
         """
         super(RoomsHelperManager, self).__init__('Rooms', RoomHelper)
         self.RoomDict = {}
-        self.updateRoomDict()
+        self.updateMainDict()
 
-    def updateRoomDict(self):
+    def updateMainDict(self):
         """
-        Update room dict.
+        Update dict for all rooms.
         {levelName : [rooms]}
         """
         flr = revitron.Filter().byCategory('Rooms')

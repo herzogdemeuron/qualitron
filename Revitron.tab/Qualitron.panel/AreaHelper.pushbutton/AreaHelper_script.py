@@ -2,7 +2,7 @@
 
 import revitron
 import pyrevit
-from qualitron import AreasHelperManager,AreaHelperWindow
+from qualitron import AreasHelperManager,AreasHelperWindow
 import Autodesk.Revit.UI as ui
  
 if __name__ == "__main__":
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         revitron.DOC.MassDisplayTemporaryOverride = revitron.DB\
                                         .MassDisplayTemporaryOverrideType\
                                         .ShowMassFormAndFloors
-        main = AreaHelperWindow(xamlfile,
+        main = AreasHelperWindow(xamlfile,
                                 AreasHelperManager())
         main.Show()
 
