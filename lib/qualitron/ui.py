@@ -236,8 +236,7 @@ class SpaceHelperWindow(Windows.Window):
 
         self.button_refresh.IsEnabled = refreshEnable
         self.button_bake.IsEnabled - bakeEnable
-        self.combo_scheme.IsEnabled = comboEnable
-        self.combo_level.IsEnabled = comboEnable
+        self.comboPanel.IsEnabled = comboEnable
 
     def changeOrder(self, list):
         """
@@ -354,3 +353,50 @@ class AreasHelperWindow(SpaceHelperWindow):
         self.refreshUi()
 
 
+class RoomsHelperWindow(SpaceHelperWindow):
+    """
+    Area Helper Window UI.
+
+    Args:
+        Windows (obj): Inherits Window
+    """
+
+    def __init__(self, xamlfile, helperManager):
+        """
+        Shows Area Helper window.
+        As a non-modal window, 
+        transactions are in event manager integrated,
+        which is used to trigger external commands.
+
+        Args:
+            xamlfile (str): xaml file path
+            areaHelperManager (obj): Area Helper Manager instance
+        """
+        super(RoomsHelperWindow, self).__init__(xamlfile, helperManager)
+        self.setupLevelCombo()
+
+    def updateSelected(self):
+        """
+        Fetch selected areas according to combo box.
+        """
+        self.HelperManager.updateTarget(self.combo_level.SelectedValue)
+
+    def setupLevelCombo(self):
+        """
+        On scheme combobox changed,
+        updates level combobox and refreshed buttons.
+        """
+        level_list = self.HelperManager.MainDict.keys()
+        level_list = self.changeOrder(level_list)
+        self.combo_level.ItemsSource = level_list
+        self.combo_level.SelectedValue = '- ALL -'
+        self.updateSelected()
+        self.refreshUi()
+
+    def comboLevelChanged(self, sender, args):
+        """
+        On level combobox changed,
+        updates area list from that level
+        """
+        self.updateSelected()
+        self.refreshUi()

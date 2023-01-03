@@ -8,6 +8,7 @@ from qualitron import View3dCreator, SharedParamUtils
 
 
 class SpaceHelperManager(object):
+
     def __init__(self, categoryStr, helperClass):
         self.Target = []    # List of selected areas/rooms
         self.MainDict = {}  # Dict for all areas/rooms
@@ -15,7 +16,7 @@ class SpaceHelperManager(object):
 
         self.HelperClass = helperClass
         self.CategoryStr = categoryStr
-        self.Prefix = categoryStr + 'Helper_'
+        self.Prefix = self.CategoryStr + 'Helper_'
 
         paramGroup = revitron.DB.BuiltInParameterGroup\
                                 .PG_ADSK_MODEL_PROPERTIES
@@ -26,6 +27,7 @@ class SpaceHelperManager(object):
 
         self.updateParamDict()
         self._removeUnused()
+    
 
     def _removeUnused(self):
         """
@@ -158,7 +160,7 @@ class SpaceHelperManager(object):
             self.ParamUtils.purgeParams()
 
     @staticmethod
-    def selectTargets(selected):
+    def selectTargets(selected,prefix):
         """
         Select areas according to heighlited direct shgapes.
 
@@ -168,7 +170,6 @@ class SpaceHelperManager(object):
         Returns:
             obj: Areas
         """
-        prefix = SpacesHelperManager.Prefix
         result = []
         for sel in selected:
             if sel.GetType().Name == 'DirectShape':
@@ -186,7 +187,6 @@ class AreasHelperManager(SpaceHelperManager):
     Manage Area Helper instances, including create, purge and
     write parameter values.
     """
-
     def __init__(self):
         """
         Initialize instance of the class.
@@ -233,7 +233,6 @@ class RoomsHelperManager(SpaceHelperManager):
         Initialize instance of the class.
         """
         super(RoomsHelperManager, self).__init__('Rooms', RoomHelper)
-        self.RoomDict = {}
         self.updateMainDict()
 
     def updateMainDict(self):
@@ -244,20 +243,20 @@ class RoomsHelperManager(SpaceHelperManager):
         flr = revitron.Filter().byCategory('Rooms')
         flr = flr.noTypes().getElements()
         rooms = [x for x in flr if x.Area > 0]
-        self.RoomDict = {}
+        self.MainDict = {}
         if rooms:
-            self.RoomDict['- ALL -'] = rooms
+            self.MainDict['- ALL -'] = rooms
         for room in rooms:
             levelName = room.Level.Name
-            if not levelName in self.RoomDict:
-                self.RoomDict[levelName] = []
-            self.RoomDict[levelName].append(room)
+            if not levelName in self.MainDict:
+                self.MainDict[levelName] = []
+            self.MainDict[levelName].append(room)
 
-    def updateRooms(self, levelName):
+    def updateTarget(self, levelName):
         """
         Refresh selected rooms.
         """
-        self.Areas = self.RoomDict.get(levelName)
+        self.Target = self.MainDict.get(levelName)
 
 
 class SpaceHelper(object):
@@ -385,7 +384,7 @@ class RoomHelper(SpaceHelper):
         Args:
             area (_type_): Revit area instance.
         """
-        super(AreaHelper, self).__init__(room, 'RoomsHelper_')
+        super(RoomHelper, self).__init__(room, 'RoomsHelper_')
         self._opt = revitron.DB.Options()
 
     def getSolid(self):
@@ -408,10 +407,14 @@ class RoomHelper(SpaceHelper):
         """
         geometry -> solid -> direct shape.
         """
-        solid = self.getSolid()
-        dishape = self.makeDishape(solid)
-        return dishape
-
+        try:
+            solid = self.getSolid()
+            dishape = self.makeDishape(solid)
+            return dishape
+        except:
+            
+            print(str(self.Elem.Id))
+            
 class LevelHandler:
     """
     Functions for handling level infos.

@@ -2,7 +2,7 @@
 
 import revitron
 import pyrevit
-from qualitron import AreasHelperManager,AreasHelperWindow
+from qualitron import AreasHelperManager, AreasHelperWindow
 import Autodesk.Revit.UI as ui
  
 if __name__ == "__main__":
@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     # Select areas function
     if selection:
-        areaIds = AreasHelperManager.selectTargets(selection)
+        areaIds = AreasHelperManager.selectTargets(selection,'AreasHelper_')
         if areaIds:
             count = str(len(areaIds))
             decide = ui.TaskDialog.Show("AreaHelper","Select " + count + " area(s)?",

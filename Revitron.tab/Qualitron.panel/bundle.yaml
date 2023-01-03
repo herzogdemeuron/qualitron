@@ -2,5 +2,5 @@ layout:
   - Settings[title:Settings]
   - Visualize[title:Visualize]
   - Clear[title:Clear Colors]
-  - AreaHelper[title:Area Helper]
-  - RoomHelper[title:Room Helper]
+  - AreaHelper[title:Areas Helper]
+  - RoomHelper[title:Rooms Helper]
