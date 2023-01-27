@@ -28,13 +28,15 @@ class Parameter:
             sharedParams = set()
             for param in el.ParametersMap:
                 pdef = param.Definition
-                sharedParams.add(ParamDef(pdef.Name, pdef.ParameterType, True))
+                paramType = _(el).getParameter(pdef.Name).definitionType
+                sharedParams.add(ParamDef(pdef.Name, paramType, True))
 
             elType = revitron.DOC.GetElement(typeId)
             if elType:
                 for param in elType.ParametersMap:
                     pdef = param.Definition
-                    sharedParams.add(ParamDef(pdef.Name, pdef.ParameterType, False))
+                    paramType = _(elType).getParameter(pdef.Name).definitionType
+                    sharedParams.add(ParamDef(pdef.Name, paramType, False))
 
             paramSets.append(sharedParams)
 
