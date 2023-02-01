@@ -4,3 +4,4 @@ layout:
   - Clear[title:Clear Colors]
   - AreaHelper[title:Areas Helper]
   - RoomHelper[title:Rooms Helper]
+  - Check3D[title:Check 3D]
