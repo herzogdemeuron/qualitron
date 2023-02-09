@@ -11,7 +11,6 @@ if __name__ == "__main__":
     selection = revitron.Selection.get()
     runWindow = True
 
-    # Select areas function
     if selection:
         areaIds = AreasHelperManager.selectTargets(selection,'AreasHelper_')
         if areaIds:
@@ -24,7 +23,6 @@ if __name__ == "__main__":
                 runWindow = False
                 revitron.Selection.set(areaIds)
                 
-    # If no selection, show window
     if runWindow:
         revitron.DOC.MassDisplayTemporaryOverride = revitron.DB\
                                         .MassDisplayTemporaryOverrideType\
