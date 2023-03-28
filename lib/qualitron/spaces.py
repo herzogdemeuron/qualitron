@@ -6,6 +6,9 @@ from revitron import DB
 from revitron import DOC
 from qualitron import View3dCreator, SharedParamUtils
 
+MIN_GAP = 0.3
+MIN_CRV = 0.3
+TRIM = 0.1
 
 class SpaceHelperManager(object):
 
@@ -271,8 +274,113 @@ class SpaceHelper(object):
         """
         self.Elem = elem
         self.Name = prefix + str(elem.Id.IntegerValue)
+    
+    
+    def createDishape(self):
+        """
+        Create a direct shape instance from a spatial element.
+        Args: elem (obj): Spatial element
+        Returns: obj: Direct shape instance
 
-    def makeDishape(self, solid):
+        It takes boundary segment lists from the spatial element,
+        each segment list contains a array of boundary segments.
+        Retrieve the curve from each boundary segment and append them to a curve loop.
+        Problem 1: between each boundary segment, there is sometimes tiny gap.
+        Problem 2: sometimes one segment is too small to be used to create direct shape.
+        And those 2 problems may happen in the same time.
+
+        Solution:
+        assum curve1 is the last curve in the curve loop and curve2 to be appended,
+        for curve2, firstly check if its start point has a gap with the end point of curve1,
+        if there is, try to fill the with a function _fillGap(). After that, check if the length
+        of curve2 is too small, if it is, treat it as a gap and fill the gap using the same function _fillGap().
+        If the length of curve2 is ok, then append it to the curve loop. 
+        After the last boundary segment is appended, check if the curve loop is open, if so fix it.   
+        At last, create a direct shape using the curve loop via function _makeDishape().
+        """
+        try:
+            id = self.Elem.Id.IntegerValue
+            seopt = DB.SpatialElementBoundaryOptions()
+            segmentLists = self.Elem.GetBoundarySegments(seopt)
+            loopList = List[DB.CurveLoop]([])
+            for segs in segmentLists:
+                crvList = []
+                for seg in segs:
+                    crv = seg.GetCurve()
+                    if crv.Length < MIN_CRV:
+                        continue  
+                    start = crv.GetEndPoint(0)
+                    end = crv.GetEndPoint(1)
+                    lastCrv = crvList[-1] if len(crvList) > 0 else None
+                    if lastCrv:
+                        lastEnd = lastCrv.GetEndPoint(1)
+                        if start.DistanceTo(lastEnd) != 0:
+                            self._fillGap(crvList, start)
+                        if crv.Length < MIN_GAP:
+                            self._fillGap(crvList, end)
+                        else:
+                            crvList.append(crv)
+                    else:
+                        crvList.append(crv)
+                self._fixOpenCurveLoop(crvList)
+                crvList = List[DB.Curve](crvList)
+                crvLoop = DB.CurveLoop.Create(crvList)
+                loopList.Add(crvLoop)
+            solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(
+                                                loopList, DB.XYZ.BasisZ, self.Height)
+            dishape = self._makeDishape(solid)
+            return dishape
+        except:
+            print('Error in creating direct shape for area ' + str(id))
+
+    def _fixOpenCurveLoop(self, crvList):
+        """
+        Fix the open curve loop.
+        Args:
+            crvList (obj): Curve loop list
+        """
+        
+        firstCrv = crvList[0]
+        lastCrv = crvList[-1]
+        firstStart = firstCrv.GetEndPoint(0)
+        lastEnd = lastCrv.GetEndPoint(1)
+        if firstStart.DistanceTo(lastEnd) != 0:
+            #crvList.remove(lastCrv)
+            self._fillGap(crvList, firstStart)
+
+    def _fillGap(self, crvList, pt):
+        """
+        Fill the gap between the last curve in crvList and the next pt.
+
+        If the gap doesn't meet the minimum length requirement MIN_GAP,
+        the last curve in the list would be trimmed (using _trimCurve()) to ensure the gap to be filled
+        with a line of an enough length, then fill the gap with a line.
+        If the gap meets the minimum length requirement MIN_GAP, fill the gap with a line.
+        Args:
+            crvList (obj): Curve loop list
+            pt (obj): next point
+        """
+        lastCrv = crvList[-1]
+        lastEnd = lastCrv.GetEndPoint(1)
+        gap = pt.DistanceTo(lastEnd)
+        if gap < MIN_GAP:
+            self._trimCurve(lastCrv)
+            crvList.remove(lastCrv)
+            crvList.append(lastCrv)
+            lastEnd = lastCrv.GetEndPoint(1)
+        line = DB.Line.CreateBound(lastEnd, pt)
+        crvList.append(line)
+
+    def _trimCurve(self, curve):
+        """reduce the length of a curve"""
+        param0 = curve.GetEndParameter(0)
+        param1 = curve.GetEndParameter(1)
+        len = curve.Length
+        radio = 1- TRIM/len
+        paramEnd = (param1 - param0)*radio + param0
+        curve.MakeBound(param0, paramEnd)
+
+    def _makeDishape(self, solid):
         """
         Create a direct shape using solid.
         """
@@ -303,75 +411,6 @@ class AreaHelper(SpaceHelper):
         super(AreaHelper, self).__init__(area, 'AreasHelper_')
         self.LevelHandler = LevelHandler()
         self.Height = self.LevelHandler.getHeight(area)
-
-    def createDishape(self):
-        """
-        Loops -> solid -> direct shape.
-        """
-        def _getCrvToAppend(basept, crv):
-            """
-            When connecting the start point of a curve with the
-            end point of the last curve:
-            If distance between two connecting points is too small,
-            then try the end point.
-
-            Args:
-                basept (obj): Base point
-                crv (obj): Curve after the base point
-
-            Returns:
-                obj: List of lines to be append to loop
-            """
-            added_line = None
-            start = crv.GetEndPoint(0)
-            end = crv.GetEndPoint(1)
-            if basept.DistanceTo(end) > 0.0025:
-                dist = start.DistanceTo(basept)
-                if dist == 0:
-                    added_line = [crv]
-                elif crv.Length > 0.0025 and dist > 0.0025:
-                    added_line = [DB.Line.CreateBound(basept, start)]
-                    added_line.append(crv)
-                else:
-                    added_line = [DB.Line.CreateBound(basept, end)]
-            return added_line
-
-        try:
-            if self.Elem.Area > 0:
-                seopt = DB.SpatialElementBoundaryOptions()
-                segments = self.Elem.GetBoundarySegments(seopt)
-                loops_col = List[DB.CurveLoop]([])
-                for segmentList in segments:
-                    loop = DB.CurveLoop()
-                    for seg in segmentList:
-                        segCrv = seg.GetCurve()
-                        if loop.NumberOfCurves() == 0:
-                            basePt = segCrv.GetEndPoint(0)
-                        crvs_to_append = _getCrvToAppend(basePt, segCrv)
-            
-                        if crvs_to_append:
-                            if loop.NumberOfCurves() == 0:
-                                finalPt = segCrv.GetEndPoint(0)
-                            for c in crvs_to_append:
-                                loop.Append(c)
-                            backPt = segCrv.GetEndPoint(0)
-                            basePt = segCrv.GetEndPoint(1)
-
-                    if loop.IsOpen():
-                        if finalPt.DistanceTo(basePt) > 0.0025:
-                            line = DB.Line.CreateBound(basePt, finalPt)
-                        else:
-                            line = DB.Line.CreateBound(basePt, backPt)
-                        loop.Append(line)
-
-                    loops_col.Add(loop)
-                solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(
-                                        loops_col, DB.XYZ.BasisZ, self.Height)
-                dishape = self.makeDishape(solid)
-                return dishape
-            
-        except:
-            print('Area could not be generated, please clean up the area boundaries. Area Id: ' + str(self.Elem.Id))
         
 
 class RoomHelper(SpaceHelper):
@@ -385,36 +424,9 @@ class RoomHelper(SpaceHelper):
             area (_type_): Revit area instance.
         """
         super(RoomHelper, self).__init__(room, 'RoomsHelper_')
-        self._opt = revitron.DB.Options()
-
-    def getSolid(self):
-        result = None
-        geomobjs = self.Elem.get_Geometry(self._opt)
-        for item in geomobjs:
-            type =  item.ToString()
-            if "Solid" in type and item.Volume > 0: 
-                result = item
-                break
-            """elif "GeometryInstance" in type:
-                solids = item.GetInstanceGeometry()
-                for solid in solids:
-                    if solid.Volume > 0:
-                        result = solid
-                        break"""	
-        return result
-
-    def createDishape(self):
-        """
-        geometry -> solid -> direct shape.
-        """
-        try:
-            solid = self.getSolid()
-            dishape = self.makeDishape(solid)
-            return dishape
-        except:
-            
-            print(str(self.Elem.Id))
-            
+        self.Height = self.Elem.get_Parameter(
+                                DB.BuiltInParameter.ROOM_HEIGHT).AsDouble()
+        
 class LevelHandler:
     """
     Functions for handling level infos.
