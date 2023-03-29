@@ -6,9 +6,9 @@ from revitron import DB
 from revitron import DOC
 from qualitron import View3dCreator, SharedParamUtils
 
-MIN_GAP = 0.3
-MIN_CRV = 0.3
-TRIM = 0.1
+MIN_GAP = 0.3 # The minimum gap to decide if the last curve should be trimmed
+MIN_CRV = 0.3 # The minimum length of a curve to be treated as a curve, otherwise it will be treated as a gap
+TRIM = 0.1 # The amount of trimming to be done on the last curve (raw parameter)
 
 class SpaceHelperManager(object):
 
@@ -245,7 +245,7 @@ class RoomsHelperManager(SpaceHelperManager):
         """
         flr = revitron.Filter().byCategory('Rooms')
         flr = flr.noTypes().getElements()
-        rooms = [x for x in flr if x.Area > 0]
+        rooms = [x for x in flr if x.Perimeter > 0]
         self.MainDict = {}
         if rooms:
             self.MainDict['- ALL -'] = rooms
@@ -276,7 +276,7 @@ class SpaceHelper(object):
         self.Name = prefix + str(elem.Id.IntegerValue)
     
     
-    def createDishape(self):
+    def _makeSolid(self):
         """
         Create a direct shape instance from a spatial element.
         Args: elem (obj): Spatial element
@@ -298,40 +298,36 @@ class SpaceHelper(object):
         After the last boundary segment is appended, check if the curve loop is open, if so fix it.   
         At last, create a direct shape using the curve loop via function _makeDishape().
         """
-        try:
-            id = self.Elem.Id.IntegerValue
-            seopt = DB.SpatialElementBoundaryOptions()
-            segmentLists = self.Elem.GetBoundarySegments(seopt)
-            loopList = List[DB.CurveLoop]([])
-            for segs in segmentLists:
-                crvList = []
-                for seg in segs:
-                    crv = seg.GetCurve()
-                    if crv.Length < MIN_CRV:
-                        continue  
-                    start = crv.GetEndPoint(0)
-                    end = crv.GetEndPoint(1)
-                    lastCrv = crvList[-1] if len(crvList) > 0 else None
-                    if lastCrv:
-                        lastEnd = lastCrv.GetEndPoint(1)
-                        if start.DistanceTo(lastEnd) != 0:
-                            self._fillGap(crvList, start)
-                        if crv.Length < MIN_GAP:
-                            self._fillGap(crvList, end)
-                        else:
-                            crvList.append(crv)
+        seopt = DB.SpatialElementBoundaryOptions()
+        segmentLists = self.Elem.GetBoundarySegments(seopt)
+        loopList = List[DB.CurveLoop]([])
+        for segs in segmentLists:
+            crvList = []
+            for seg in segs:
+                crv = seg.GetCurve()
+                if crv.Length < MIN_CRV:
+                    continue  
+                start = crv.GetEndPoint(0)
+                end = crv.GetEndPoint(1)
+                lastCrv = crvList[-1] if len(crvList) > 0 else None
+                if lastCrv:
+                    lastEnd = lastCrv.GetEndPoint(1)
+                    if start.DistanceTo(lastEnd) != 0:
+                        self._fillGap(crvList, start)
+                    if crv.Length < MIN_GAP:
+                        self._fillGap(crvList, end)
                     else:
                         crvList.append(crv)
-                self._fixOpenCurveLoop(crvList)
-                crvList = List[DB.Curve](crvList)
-                crvLoop = DB.CurveLoop.Create(crvList)
-                loopList.Add(crvLoop)
-            solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(
-                                                loopList, DB.XYZ.BasisZ, self.Height)
-            dishape = self._makeDishape(solid)
-            return dishape
-        except:
-            print('Error in creating direct shape for area ' + str(id))
+                else:
+                    crvList.append(crv)
+            self._fixOpenCurveLoop(crvList)
+            crvList = List[DB.Curve](crvList)
+            crvLoop = DB.CurveLoop.Create(crvList)
+            loopList.Add(crvLoop)
+        solid = DB.GeometryCreationUtilities.CreateExtrusionGeometry(
+                                            loopList, DB.XYZ.BasisZ, self.Height)
+        return solid
+        
 
     def _fixOpenCurveLoop(self, crvList):
         """
@@ -345,7 +341,6 @@ class SpaceHelper(object):
         firstStart = firstCrv.GetEndPoint(0)
         lastEnd = lastCrv.GetEndPoint(1)
         if firstStart.DistanceTo(lastEnd) != 0:
-            #crvList.remove(lastCrv)
             self._fillGap(crvList, firstStart)
 
     def _fillGap(self, crvList, pt):
@@ -380,23 +375,26 @@ class SpaceHelper(object):
         paramEnd = (param1 - param0)*radio + param0
         curve.MakeBound(param0, paramEnd)
 
-    def _makeDishape(self, solid):
+    def createDishape(self):
         """
         Create a direct shape using solid.
         """
-        cateId = DB.ElementId(DB.BuiltInCategory.OST_Mass)
-        lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(DOC) 
-        shapeType = DB.DirectShapeType.Create(DOC, self.Name , cateId)
-        shapeType.SetShape(List[DB.GeometryObject ]([solid]))
-        lib.AddDefinitionType(self.Name, shapeType.Id)
-        element = DB.DirectShape.CreateElementInstance(
-                                                    DOC, shapeType.Id, 
-                                                    cateId, 
-                                                    self.Name,
-                                                    DB.Transform.Identity)
-        element.SetTypeId(shapeType.Id)
-        return element 
-
+        try:
+            solid = self._makeSolid()
+            cateId = DB.ElementId(DB.BuiltInCategory.OST_Mass)
+            lib = DB.DirectShapeLibrary.GetDirectShapeLibrary(DOC) 
+            shapeType = DB.DirectShapeType.Create(DOC, self.Name , cateId)
+            shapeType.SetShape(List[DB.GeometryObject ]([solid]))
+            lib.AddDefinitionType(self.Name, shapeType.Id)
+            element = DB.DirectShape.CreateElementInstance(
+                                                        DOC, shapeType.Id, 
+                                                        cateId, 
+                                                        self.Name,
+                                                        DB.Transform.Identity)
+            element.SetTypeId(shapeType.Id)
+            return element 
+        except:
+            print('Error in creating direct shape for element Id: {}'.format(self.Elem.Id))
    
 class AreaHelper(SpaceHelper):
     """
