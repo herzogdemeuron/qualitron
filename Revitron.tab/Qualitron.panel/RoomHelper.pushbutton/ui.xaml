@@ -1,0 +1,192 @@
+﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Rooms Helper"
+        SizeToContent="WidthAndHeight" ResizeMode="NoResize" 
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        Closing="windowClosing"
+        Topmost="True"
+        WindowStyle="None"
+        Background="#00FFFFFF"
+        AllowsTransparency="True">
+
+<Window.Resources>
+<Style x:Key="PressButton" TargetType="Button">
+<Setter Property="Template">
+<Setter.Value>
+<ControlTemplate TargetType="Button">
+    <Grid>
+        <Ellipse>
+            <Ellipse.Style>
+            <Style TargetType="Ellipse">
+                <Style.Triggers>
+
+                    <DataTrigger
+                    Binding="{Binding Content,
+                            RelativeSource={RelativeSource AncestorType=Button}}"
+                    Value="Purge"
+                    >
+                    <Setter
+                    Property="Fill"
+                    Value="PaleVioletRed"/>
+                    </DataTrigger>
+
+                    <DataTrigger
+                    Binding="{Binding Content,
+                            RelativeSource={RelativeSource AncestorType=Button}}"
+                    Value="Visualize"
+                    >
+                    <Setter
+                    Property="Fill"
+                    Value="LightSeaGreen"/>
+                    </DataTrigger>
+
+                    <DataTrigger
+                    Binding="{Binding Content,
+                            RelativeSource={RelativeSource AncestorType=Button}}"
+                    Value="Bake"
+                    >
+                    <Setter
+                    Property="Fill"
+                    Value="LightGray"/>
+                    </DataTrigger>
+
+                    <DataTrigger
+                    Binding="{Binding Content,
+                            RelativeSource={RelativeSource AncestorType=Button}}"
+                    Value=""
+                    >
+                    <Setter
+                    Property="Fill"
+                    Value="#1c2630"/>
+                    </DataTrigger>
+
+                    <DataTrigger
+                    Binding="{Binding Content,
+                            RelativeSource={RelativeSource AncestorType=Button}}"
+                    Value="Close"
+                    >
+                    <Setter 
+                    Property="Fill"
+                    Value="LightGray"/>
+                    </DataTrigger>
+
+                </Style.Triggers>
+            </Style>
+        </Ellipse.Style>
+        </Ellipse>
+        <ContentPresenter
+        Focusable="False"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center"/>
+        <Label
+            Name="label_refresh"
+            FontSize="10"
+            Content = "{Binding Tag,
+                        RelativeSource={RelativeSource AncestorType=Button}}"
+            Opacity="0.5"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center" 
+            Padding="0,30,0,0"
+            Focusable="False"
+            />
+    </Grid>
+
+    <ControlTemplate.Triggers>
+        <Trigger
+        Property="IsMouseOver"
+        Value="True">
+            <Setter
+            Property="Opacity"
+            Value="0.7"/>
+        </Trigger>
+        <Trigger
+        Property="IsPressed"
+        Value="True">
+            <Setter
+            Property="Opacity"
+            Value="1"/>
+        </Trigger>
+    </ControlTemplate.Triggers>
+</ControlTemplate>
+</Setter.Value>
+</Setter>
+</Style>
+</Window.Resources>
+<Border CornerRadius="15"
+        Background="#23303d"
+        Margin="20"
+        BorderBrush="#66ffffff"
+		BorderThickness="1"
+        MouseLeftButtonDown="dragWindow"
+        UseLayoutRounding="True">
+<Border.Effect>
+    <DropShadowEffect
+    Color="{DynamicResource pyRevitDarkColor}"
+    BlurRadius="15"
+    Opacity="0.25"/>
+</Border.Effect>
+	
+<StackPanel Margin="0,30,0,0">
+
+    <StackPanel Name="comboPanel">	
+        <DockPanel Margin="10">
+            <Label Content="Level: "
+                    HorizontalAlignment="Left"
+                    Foreground="White"/>
+            <ComboBox Name="combo_level"
+                        SelectedIndex="0"
+                        Width="150"
+                        HorizontalAlignment="Right"
+                        SelectionChanged="comboLevelChanged"/>  
+        </DockPanel>
+    </StackPanel>
+
+    <Grid Margin="30">		
+    <Grid.ColumnDefinitions>
+	<ColumnDefinition Width="*"/>
+	<ColumnDefinition Width="95"/>
+    <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+        <Button
+        Name="button_refresh"
+        Grid.Column="1"
+        Style="{StaticResource PressButton}"
+        Width="95"
+        Height="95"
+        Click="refreshClicked"
+        />
+
+        <Button
+        Name="button_bake"
+        Grid.Column="2"
+        Style="{StaticResource PressButton}"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Bottom"
+        Width="50"
+        Height="50"
+        Click="bakeClicked"
+        />
+
+        <Button
+        Name="button_close"
+        Grid.Column="0"
+        Style="{StaticResource PressButton}"
+        HorizontalAlignment="Right"
+        VerticalAlignment="Bottom"
+        Width="50"
+        Height="50"
+        Click="closeClicked"
+        Content="Close"
+        /> 
+    </Grid>
+
+</StackPanel>
+</Border>
+</Window>
+
+
+
+
+
+

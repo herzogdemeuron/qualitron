@@ -2,7 +2,7 @@
 
 import revitron
 import pyrevit
-from qualitron import AreasHelperManager, AreasHelperWindow
+from qualitron import RoomsHelperManager, RoomsHelperWindow
 import Autodesk.Revit.UI as ui
  
 if __name__ == "__main__":
@@ -12,10 +12,10 @@ if __name__ == "__main__":
     runWindow = True
 
     if selection:
-        areaIds = AreasHelperManager.selectTargets(selection,'AreasHelper_')
+        areaIds = RoomsHelperManager.selectTargets(selection,'RoomsHelper_')
         if areaIds:
             count = str(len(areaIds))
-            decide = ui.TaskDialog.Show("AreaHelper","Select " + count + " area(s)?",
+            decide = ui.TaskDialog.Show("RoomsHelper","Select " + count + " room(s)?",
                                         ui.TaskDialogCommonButtons.Yes|
                                         ui.TaskDialogCommonButtons.No
                                         )
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         revitron.DOC.MassDisplayTemporaryOverride = revitron.DB\
                                         .MassDisplayTemporaryOverrideType\
                                         .ShowMassFormAndFloors
-        main = AreasHelperWindow(xamlfile,
-                                AreasHelperManager())
+        main = RoomsHelperWindow(xamlfile,
+                                RoomsHelperManager())
         main.Show()
 

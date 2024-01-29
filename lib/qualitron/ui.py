@@ -162,8 +162,7 @@ class CompareParameterWindow(ColorSwitchWindow):
     def dragWindow(self, sender, arg):
         self.DragMove()
 
-
-class AreaHelperWindow(Windows.Window):
+class SpaceHelperWindow(Windows.Window):
     """
     Area Helper Window UI.
 
@@ -171,7 +170,7 @@ class AreaHelperWindow(Windows.Window):
         Windows (obj): Inherits Window
     """
 
-    def __init__(self, xamlfile, areaHelperManager):
+    def __init__(self, xamlfile, helperManager):
         """
         Shows Area Helper window.
         As a non-modal window, 
@@ -183,72 +182,47 @@ class AreaHelperWindow(Windows.Window):
             areaHelperManager (obj): Area Helper Manager instance
         """
         wpf.LoadComponent(self, xamlfile)
-        self.areaHelperManager = areaHelperManager
+        self.HelperManager = helperManager
+        self.setupEvents()
+        self.Status = False
+        # Status: if any spaceHleper instances exist
+        self.updateStatus()
+        self.refreshUi()
+    
+    def setupEvents(self):
         self.refresh_event = EventManager()
         self.bake_event = EventManager()
         self.close_event = EventManager()
-        self.areaHelperCheck = False
-        self.updateStatus()
-        self.refreshUi()
-        self.combo_scheme.ItemsSource = self.areaHelperManager.AreaDict
-
-        self.refresh_event.setFunctions(self.areaHelperManager.toggle,
+        self.refresh_event.setFunctions(self.HelperManager.toggle,
                                         self.updateStatus,
                                         self.refreshUi)
-        self.bake_event.setFunctions(self.areaHelperManager.bakeDishapes,
+        self.bake_event.setFunctions(self.HelperManager.bakeDishapes,
                                         self.updateStatus,
                                         self.refreshUi)                                
-        self.close_event.setFunctions(self.areaHelperManager.removeDishapes)
-    
-    def updateSelectedAreas(self):
-        """
-        Fetch selected areas according to combo box.
-        """
-        self.areaHelperManager.updateAreas(self.combo_scheme.SelectedValue,
-                                            self.combo_level.SelectedValue)
-    
-    def comboSchemeChanged(self, sender, args):
-        """
-        On scheme combobox changed,
-        updates level combobox and refreshed buttons.
-        """
-        level_list = self.areaHelperManager.AreaDict[
-                        self.combo_scheme.SelectedValue]
-        level_list = self.changeOrder(level_list.keys())
-        self.combo_level.ItemsSource = level_list
-        self.updateSelectedAreas()
-        self.refreshUi()
-        self.combo_level.SelectedValue = '- ALL -'
-
-    def comboLevelChanged(self, sender, args):
-        """
-        On level combobox changed,
-        updates area list from that level
-        """
-        self.updateSelectedAreas()
-        self.refreshUi()
+        self.close_event.setFunctions(self.HelperManager.removeDishapes)
 
     def updateStatus(self):
         """
-        Calls check status function from area helper manager
-        """
-        self.areaHelperCheck = self.areaHelperManager.checkStatus()
+        Call check status function from area helper manager,
+        for UI reaction.        """
+        self.Status = self.HelperManager.checkStatus()
 
     def refreshUi(self):
         """
         Updates ui according to area helper check result
         """
-        if self.areaHelperCheck:
+        if self.Status:
             self.button_refresh.Content = 'Purge'
             self.button_bake.Content = 'Bake'
             self.button_refresh.Tag = ''
             refreshEnable = True
             bakeEnable = True
             comboEnable = False
-        elif self.areaHelperManager.Areas:
+        elif self.HelperManager.Target:
+            # If there are selected spaces as Target.
             self.button_refresh.Content = 'Visualize'
             self.button_bake.Content = ''
-            self.button_refresh.Tag = len(self.areaHelperManager.Areas)
+            self.button_refresh.Tag = len(self.HelperManager.Target)
             refreshEnable = True
             bakeEnable = False
             comboEnable = True
@@ -262,12 +236,11 @@ class AreaHelperWindow(Windows.Window):
 
         self.button_refresh.IsEnabled = refreshEnable
         self.button_bake.IsEnabled - bakeEnable
-        self.combo_scheme.IsEnabled = comboEnable
-        self.combo_level.IsEnabled = comboEnable
+        self.comboPanel.IsEnabled = comboEnable
 
     def changeOrder(self, list):
         """
-        Sort level list,
+        Sort list,
         add '- ALL -' to top
         """
         if list:
@@ -287,8 +260,8 @@ class AreaHelperWindow(Windows.Window):
         Tracebacks must be catched to avoid application crash.
         """
         try:
-            self.areaHelperManager.updateAreaDict()
-            self.updateSelectedAreas()
+            self.HelperManager.updateMainDict()
+            self.updateSelected()
             self.refresh_event.raiseEvent() 
         except:
             import traceback
@@ -301,8 +274,8 @@ class AreaHelperWindow(Windows.Window):
         Tracebacks must be catched to avoid application crash.
         """
         try:
-            self.areaHelperManager.updateAreaDict()
-            self.updateSelectedAreas()
+            self.HelperManager.updateMainDict()
+            self.updateSelected()
             self.bake_event.raiseEvent() 
         except:
             import traceback
@@ -329,3 +302,101 @@ class AreaHelperWindow(Windows.Window):
 
 
 
+class AreasHelperWindow(SpaceHelperWindow):
+    """
+    Area Helper Window UI.
+
+    Args:
+        Windows (obj): Inherits Window
+    """
+
+    def __init__(self, xamlfile, helperManager):
+        """
+        Shows Area Helper window.
+        As a non-modal window, 
+        transactions are in event manager integrated,
+        which is used to trigger external commands.
+
+        Args:
+            xamlfile (str): xaml file path
+            areaHelperManager (obj): Area Helper Manager instance
+        """
+        super(AreasHelperWindow, self).__init__(xamlfile, helperManager)
+        self.combo_scheme.ItemsSource = self.HelperManager.MainDict
+
+    def updateSelected(self):
+        """
+        Fetch selected areas according to combo box.
+        """
+        self.HelperManager.updateTarget(self.combo_scheme.SelectedValue,
+                                            self.combo_level.SelectedValue)
+
+    def comboSchemeChanged(self, sender, args):
+        """
+        On scheme combobox changed,
+        updates level combobox and refreshed buttons.
+        """
+        level_list = self.HelperManager.MainDict[
+                        self.combo_scheme.SelectedValue]
+        level_list = self.changeOrder(level_list.keys())
+        self.combo_level.ItemsSource = level_list
+        self.updateSelected()
+        self.refreshUi()
+        self.combo_level.SelectedValue = '- ALL -'
+
+    def comboLevelChanged(self, sender, args):
+        """
+        On level combobox changed,
+        updates area list from that level
+        """
+        self.updateSelected()
+        self.refreshUi()
+
+
+class RoomsHelperWindow(SpaceHelperWindow):
+    """
+    Area Helper Window UI.
+
+    Args:
+        Windows (obj): Inherits Window
+    """
+
+    def __init__(self, xamlfile, helperManager):
+        """
+        Shows Area Helper window.
+        As a non-modal window, 
+        transactions are in event manager integrated,
+        which is used to trigger external commands.
+
+        Args:
+            xamlfile (str): xaml file path
+            areaHelperManager (obj): Area Helper Manager instance
+        """
+        super(RoomsHelperWindow, self).__init__(xamlfile, helperManager)
+        self.setupLevelCombo()
+
+    def updateSelected(self):
+        """
+        Fetch selected areas according to combo box.
+        """
+        self.HelperManager.updateTarget(self.combo_level.SelectedValue)
+
+    def setupLevelCombo(self):
+        """
+        On scheme combobox changed,
+        updates level combobox and refreshed buttons.
+        """
+        level_list = self.HelperManager.MainDict.keys()
+        level_list = self.changeOrder(level_list)
+        self.combo_level.ItemsSource = level_list
+        self.combo_level.SelectedValue = '- ALL -'
+        self.updateSelected()
+        self.refreshUi()
+
+    def comboLevelChanged(self, sender, args):
+        """
+        On level combobox changed,
+        updates area list from that level
+        """
+        self.updateSelected()
+        self.refreshUi()

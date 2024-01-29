@@ -138,17 +138,20 @@ class SharedParamUtils():
         group = self.File.Groups.get_Item(groupName)
         if not group:
             group = self.File.Groups.Create(groupName)
+        if not group:
+            print('Please check shared parameter file setting.')
         return group
 
     def _getDefinition(self, name, readOnly):
-        try:
-            paramType = revitron.DB.SpecTypeId.String.Text
-        except:
-            paramType = revitron.DB.ParameterType.Text
         """
         Get or create parameter definition
         in the shared parameter file
         """
+        try:
+            paramType = revitron.DB.SpecTypeId.String.Text
+        except:
+            paramType = revitron.DB.ParameterType.Text
+            
         if name in self.DefiDict:
             return self.DefiDict[name]
         else:
@@ -204,7 +207,7 @@ class SharedParamUtils():
             paramDict (dict): Dictionary {parameter name in area: parameter name in direct shape}
         """
         for paramName,targetName in paramDict.items():
-            value = area.LookupParameter(paramName).AsValueString()
+            value = Parameter.GetValue(area, paramName, True)
             target_param = self._getParamFromGroup(
                                 dishape,targetName)
             if value:

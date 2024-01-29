@@ -12,5 +12,5 @@ from qualitron.ui import *
 from qualitron.colors import *
 from qualitron.providers import *
 from qualitron.analyze import *
-from qualitron.areas import *
+from qualitron.spaces import *
 from qualitron.event import *
