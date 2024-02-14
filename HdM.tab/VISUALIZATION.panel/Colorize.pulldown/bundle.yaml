@@ -1,4 +1,4 @@
 layout:
   - CompareParameterValues[title:Compare Parameter Values]
-  - CheckParameterValues[title:Check Parameter Values]
   - Warnings[title:Show Warnings]
+  - ClearColors[title:Clear Colors]

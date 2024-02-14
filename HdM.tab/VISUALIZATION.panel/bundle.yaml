@@ -1,0 +1,5 @@
+layout:
+  - Check3D[title:Check 3D]
+  - Colorize
+  - RoomHelper[title:Room Helper]
+  - AreaHelper[title:Area Helper]
