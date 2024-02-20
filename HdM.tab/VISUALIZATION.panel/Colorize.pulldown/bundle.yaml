@@ -1,4 +1,4 @@
 layout:
-  - CompareParameterValues[title:Compare Parameter Values]
+  - CompareParameterValues[title:Colorize Selections]
   - Warnings[title:Show Warnings]
   - ClearColors[title:Clear Colors]
