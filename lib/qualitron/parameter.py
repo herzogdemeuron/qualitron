@@ -1,5 +1,6 @@
 import revitron
 from revitron import _
+import sys
 
 class Parameter:
     """
@@ -135,6 +136,9 @@ class SharedParamUtils():
         Get or create wanted parameter group
         in the shared parameter file.
         """
+        if not self.File:
+            print('Please check shared parameter file setting.')
+            sys.exit()
         group = self.File.Groups.get_Item(groupName)
         if not group:
             group = self.File.Groups.Create(groupName)
