@@ -2,6 +2,7 @@ import revitron
 from revitron import _
 from System.Collections.Generic import List
 import sys
+from pyrevit import forms
 
 class ElementOverrides:
     """
@@ -313,6 +314,11 @@ class View3DChecker:
         crsm = view2d.GetCropRegionShapeManager()
         crop = crsm.GetCropShape()
 
+        # check if active view is a sheet
+        if view2d.ViewType not in (planViewTypes + sectionViewTypes):
+            forms.alert('Can only create 3D view from plan or section view.', ok=True)
+            return
+
         recCheck = False
         if crop:    
             crop = crop[0]
@@ -321,11 +327,11 @@ class View3DChecker:
             if rec:
                 recCheck = True
             else:
-                print('View Crop is not rectangular.')
+                forms.alert('View Crop is not rectangular.', ok=True)
         else:
-            print('Please turn on view crop.')
+            forms.alert('Please activate view crop.', ok=True)
         if not recCheck:
-            sys.exit()
+            return
 
         cropPts = getCropPoints(crop, plane)
         if view2d.ViewType in planViewTypes:

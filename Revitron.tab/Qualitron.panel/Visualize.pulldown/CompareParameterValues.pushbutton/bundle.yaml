@@ -1,3 +1,0 @@
-tooltip: Compare parameter values. Choose a parameter from selected element and see if other elements of the same category have the same value.
-help_url: https://git.herzogdemeuron.com/pyrevit/qualitron/-/blob/master/Revitron.tab/Qualitron.panel/Visualize.pulldown/CompareParameterValues.pushbutton/README.md
-context: Selection

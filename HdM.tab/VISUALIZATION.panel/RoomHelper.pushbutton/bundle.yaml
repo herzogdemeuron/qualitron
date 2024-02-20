@@ -1,0 +1,23 @@
+tooltip: >
+  Visualize Rooms in 3D
+
+
+  How to Use:
+
+
+  1. Select a level, then click "Visualize" to begin. This action creates 3D representations of the selected rooms.
+
+
+  2. All parameters associated with the selected rooms are automatically transferred to the corresponding 3D instances.
+
+
+  3. Upon closing the script, all generated 3D instances are automatically purged to maintain a clean workspace. If you wish to keep any instances, ensure to 'bake' them into the model.
+
+
+  4. To emphasize specific rooms, select their 3D instances and activate the script button once more. This highlights the chosen rooms for easy identification.
+
+
+  5. Utilize tools like "Color Splasher" or "Colorize Selections" to apply color to the 3D instances, enhancing their visual distinction.
+
+  
+  Troubleshooting Tip: If you encounter any rooms that cannot be visualized, inspect and clean their boundaries for improved results.

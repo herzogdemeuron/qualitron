@@ -124,6 +124,11 @@ def tint(rgb, factor):
     newB = rgb[2] + ((255 - rgb[2]) * factor)
     return [newR, newG, newB]
 
+count = len(revitron.Selection.get())
+
+if count == 0:
+    forms.alert('No element selected.', ok=True)
+    sys.exit()
 
 with revitron.Transaction():
     paramValuesDict = compareParameterValues(
