@@ -1,19 +1,23 @@
-tooltip: >-
-  Visualizes areas in 3D.
-
-  How To Use
-  
-
-  1. Choose area scheme and level, hit visualize.
-
-  2. All parameters of areas would be copied to 3D instances.
-
-  3. 3D instances would be purged automatically by closing the script, unless baked.
-
-  4. To highlight wanted areas, just select 3D instances and hit the script button again.
-
-  5. Use "Color Splasher" or "Colorize Selections" to further colorize the result.
+tooltip: >
+  Visualize Areas in 3D
 
 
-  If some areas cannot be visualized, please clean the area boundaries.
-help_url: https://git.herzogdemeuron.com/pyrevit/qualitron/-/blob/master/Revitron.tab/Qualitron.panel/AreaHelper.pushbutton/README.md
+  How to Use:
+
+
+  1. Select an area scheme and level, then click "Visualize" to begin. This action creates 3D representations of the selected areas.
+
+
+  2. All parameters associated with the selected areas are automatically transferred to the corresponding 3D instances.
+
+
+  3. Upon closing the script, all generated 3D instances are automatically purged to maintain a clean workspace. If you wish to keep any instances, ensure to 'bake' them into the model.
+
+
+  4. To emphasize specific areas, select their 3D instances and activate the script button once more. This highlights the chosen areas for easy identification.
+
+
+  5. Utilize tools like "Color Splasher" or "Colorize Selections" to apply color to the 3D instances, enhancing their visual distinction.
+
+
+  Troubleshooting Tip: If you encounter any areas that cannot be visualized, inspect and clean their boundaries for improved results.

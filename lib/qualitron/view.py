@@ -315,8 +315,8 @@ class View3DChecker:
         crop = crsm.GetCropShape()
 
         # check if active view is a sheet
-        if view2d.ViewType == vt.DrawingSheet:
-            forms.alert('Cannot create 3D view from a sheet.', ok=True)
+        if view2d.ViewType not in (planViewTypes + sectionViewTypes):
+            forms.alert('Can only create 3D view from plan or section view.', ok=True)
             return
 
         recCheck = False
