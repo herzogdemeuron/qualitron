@@ -1,8 +1,10 @@
 import revitron
-from revitron import _
 from System.Collections.Generic import List
-import sys
-from pyrevit import forms
+from pyrevit import DB, UI, forms
+
+uidoc = __revit__.ActiveUIDocument
+active_doc = __revit__.ActiveUIDocument.Document
+active_view = uidoc.ActiveView
 
 class ElementOverrides:
     """
@@ -16,7 +18,7 @@ class ElementOverrides:
             view (object): A Revit view element
             element (object): A Revit element or ElementId
         """
-        self.overrides = revitron.DB.OverrideGraphicSettings()
+        self.overrides = DB.OverrideGraphicSettings()
         self.element = element
         self.view = view
         try:
@@ -34,9 +36,9 @@ class ElementOverrides:
             pattern (object): An element id of a Revit fill pattern
             overrideCutPattern (bool, optional): Override cut pattern. Defaults to True.
         """
-        patternColor = revitron.DB.Color(color[0], color[1], color[2])
+        patternColor = DB.Color(color[0], color[1], color[2])
         x = 0.7
-        lineColor =  revitron.DB.Color(color[0] * x, color[1] * x, color[2] * x)
+        lineColor =  DB.Color(color[0] * x, color[1] * x, color[2] * x)
         self.overrides.SetSurfaceForegroundPatternColor(patternColor)
         self.overrides.SetSurfaceForegroundPatternId(patternId)
         self.overrides.SetProjectionLineColor(lineColor)
@@ -69,8 +71,8 @@ class Isolate:
         """
         if not type(categoryIds) == list:
             categoryIds = [categoryIds]
-        categoryIds = List[revitron.DB.ElementId](categoryIds)
-        revitron.ACTIVE_VIEW.IsolateCategoriesTemporary(categoryIds)
+        categoryIds = List[DB.ElementId](categoryIds)
+        active_view.IsolateCategoriesTemporary(categoryIds)
     
     @staticmethod
     def byElementIds(elementIds):
@@ -80,8 +82,8 @@ class Isolate:
         Args:
             elementIds (object): A list of element ids or a single element id
         """
-        elementIds = List[revitron.DB.ElementId](elementIds)
-        revitron.ACTIVE_VIEW.IsolateElementsTemporary(elementIds)
+        elementIds = List[DB.ElementId](elementIds)
+        active_view.IsolateElementsTemporary(elementIds)
 
         
 class View3dCreator:
@@ -102,31 +104,35 @@ class View3dCreator:
         Returns:
             obj: new 3D view
         """
-        username = revitron.DOC.Application.Username
+        username = active_doc.Application.Username
         newViewName = prefix + username
-        viewType3D = revitron.DB.ViewType.ThreeD
-        fltr = revitron.Filter().byClass('View')
-        fltr = fltr.noTypes().getElements()
-        newView = [v for v in fltr 
+        viewType3D = DB.ViewType.ThreeD
+        views = DB.FilteredElementCollector(active_doc).OfClass(DB.View).WhereElementIsNotElementType().ToElements()
+        newView = [v for v in views 
                                 if v.ViewType == viewType3D
                                     and v.Name == newViewName]
+        transaction = DB.Transaction(active_doc, 'Create 3D view')
         if newView:
             newView = newView[0]
         else:
-            view3DFamily = revitron.DB.ViewFamily.ThreeDimensional
-            viewFamilyType = [vt for vt in revitron.Filter()
-                                                    .byClass('ViewFamilyType').getElements()
-                                                    if vt.ViewFamily == view3DFamily][0]                   
-            with revitron.Transaction():
-                view3D = revitron.DB.View3D         
-                newView = view3D.CreateIsometric(revitron.DOC,viewFamilyType.Id)
-                newView.Name = newViewName
-        if setActive:
-            revitron.UIDOC.ActiveView = newView
+            view3DFamily = DB.ViewFamily.ThreeDimensional
+            view_types = DB.FilteredElementCollector(active_doc).OfClass(DB.ViewFamilyType).ToElements()
+            viewFamilyType = [vt for vt in view_types if vt.ViewFamily == view3DFamily][0]
 
-            with revitron.Transaction():
-                ids = List[revitron.DB.ElementId](categoryIds)
-                newView.IsolateCategoriesTemporary(ids)
+            transaction.Start()
+            view3D = DB.View3D         
+            newView = view3D.CreateIsometric(active_doc,viewFamilyType.Id)
+            newView.Name = newViewName
+            transaction.Commit()
+
+        if setActive:
+            uidoc.ActiveView = newView
+
+            transaction.Start()
+            ids = List[DB.ElementId](categoryIds)
+            newView.IsolateCategoriesTemporary(ids)
+            transaction.Commit()
+
         return newView
     
 
@@ -139,7 +145,7 @@ class View3DChecker:
         """
         Function to be called in order to create.
         """
-        XYZ = revitron.DB.XYZ  
+        XYZ = DB.XYZ  
         def makeCounterClockweise(curveloop):
             """
             Make sure that a curve loop is counter clockweise
@@ -148,7 +154,7 @@ class View3DChecker:
             Args:
                 curveloop (obj): A revit curve loop element.
             """
-            if not curveloop.IsCounterclockwise(revitron.DB.XYZ(0, 0, 1)):
+            if not curveloop.IsCounterclockwise(DB.XYZ(0, 0, 1)):
                 curveloop.Flip()
 
         def getCropPoints(crop, plane):
@@ -209,18 +215,18 @@ class View3DChecker:
             """
             origin = XYZ(0, 0, 0)
             axis = XYZ(0, 0, 1)
-            rotate = revitron.DB.Transform.\
+            rotate = DB.Transform.\
                     CreateRotationAtPoint(axis,
                                         angle,
                                         origin)
 
-            rotate_back = revitron.DB.Transform.\
+            rotate_back = DB.Transform.\
                     CreateRotationAtPoint(axis,
                                         -angle,
                                         origin)	
             r_min = rotate.OfPoint(in_min)
             r_max = rotate.OfPoint(in_max)
-            bb = revitron.DB.BoundingBoxXYZ()
+            bb = DB.BoundingBoxXYZ()
             bb.Max = r_max
             bb.Min = r_min
             bb.Transform = bb.Transform.Multiply(rotate_back)
@@ -237,11 +243,15 @@ class View3DChecker:
             Returns:
                 obj: created 3D view.
             """
-            view3d = View3dCreator.create('Qualitron_')
-            with revitron.Transaction():
-                view3d.SetSectionBox(bb)
-                view3d.IsSectionBoxActive = True
-            revitron.ACTIVE_VIEW = view3d
+            view3d = View3dCreator.create('HdM_3D_')
+
+            transaction = DB.Transaction(active_doc, 'Set 3D view section box')
+            transaction.Start()
+            view3d.SetSectionBox(bb)
+            view3d.IsSectionBoxActive = True
+            transaction.Commit()
+
+            uidoc.ActiveView = view3d
             return view3d
 
         def createPlanBbox(view2d, points):
@@ -257,22 +267,22 @@ class View3DChecker:
             Returns:
                 _type_: _description_
             """
-            cutPlane = revitron.DB.PlanViewPlane.CutPlane
-            topClipPlane = revitron.DB.PlanViewPlane.TopClipPlane
-            bottomClipPlane = revitron.DB.PlanViewPlane.BottomClipPlane
+            cutPlane = DB.PlanViewPlane.CutPlane
+            topClipPlane = DB.PlanViewPlane.TopClipPlane
+            bottomClipPlane = DB.PlanViewPlane.BottomClipPlane
 
             viewrange = view2d.GetViewRange()	
-            cut_level = revitron.DOC.GetElement(viewrange.GetLevelId(cutPlane))
+            cut_level = active_doc.GetElement(viewrange.GetLevelId(cutPlane))
             cut_offset = viewrange.GetOffset(cutPlane)
             cut_replace = cut_level.ProjectElevation + cut_offset
             
-            top_level = revitron.DOC.GetElement(viewrange.GetLevelId(topClipPlane))
+            top_level = active_doc.GetElement(viewrange.GetLevelId(topClipPlane))
             top_offset = viewrange.GetOffset(topClipPlane)
             top_height = getLevelHeight(top_level,
                                         top_offset,
                                         cut_replace + 6.561679)	
             
-            bottom_level = revitron.DOC.GetElement(viewrange.GetLevelId(bottomClipPlane))
+            bottom_level = active_doc.GetElement(viewrange.GetLevelId(bottomClipPlane))
             bottom_offset = viewrange.GetOffset(bottomClipPlane)	
             bottom_height = getLevelHeight(bottom_level,
                                             bottom_offset,
@@ -307,15 +317,14 @@ class View3DChecker:
             return createBoundingBox(p_min,p_max,angle)
 
         
-        vt = revitron.DB.ViewType           
+        vt = DB.ViewType           
         planViewTypes = [vt.FloorPlan,vt.AreaPlan,vt.CeilingPlan]
         sectionViewTypes = [vt.Section]
-        view2d = revitron.ACTIVE_VIEW
-        crsm = view2d.GetCropRegionShapeManager()
+        crsm = active_view.GetCropRegionShapeManager()
         crop = crsm.GetCropShape()
-
+        print(active_view.ViewType)
         # check if active view is a sheet
-        if view2d.ViewType not in (planViewTypes + sectionViewTypes):
+        if active_view.ViewType not in (planViewTypes + sectionViewTypes):
             forms.alert('Can only create 3D view from plan or section view.', ok=True)
             return
 
@@ -334,10 +343,10 @@ class View3DChecker:
             return
 
         cropPts = getCropPoints(crop, plane)
-        if view2d.ViewType in planViewTypes:
-            bbox = createPlanBbox(view2d, cropPts)
-        elif view2d.ViewType in sectionViewTypes:
-            bbox = createSectionBbox(view2d, cropPts, plane)
+        if active_view.ViewType in planViewTypes:
+            bbox = createPlanBbox(active_view, cropPts)
+        elif active_view.ViewType in sectionViewTypes:
+            bbox = createSectionBbox(active_view, cropPts, plane)
         else:
             bbox = None
         if bbox:    
