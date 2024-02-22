@@ -1,4 +1,3 @@
-import revitron
 from System.Collections.Generic import List
 from pyrevit import DB, UI, forms
 
@@ -322,7 +321,10 @@ class View3DChecker:
         sectionViewTypes = [vt.Section]
         crsm = active_view.GetCropRegionShapeManager()
         crop = crsm.GetCropShape()
-        print(active_view.ViewType)
+
+        if active_view.ViewType == DB.ViewType.ProjectBrowser:
+            forms.alert('Please activate a view.', ok=True)
+            return
         # check if active view is a sheet
         if active_view.ViewType not in (planViewTypes + sectionViewTypes):
             forms.alert('Can only create 3D view from plan or section view.', ok=True)
