@@ -117,7 +117,7 @@ class SharedParamUtils():
     A utility class of functions related to shared parameter. 
     """
 
-    def __init__(self, groupname, paramGroup):
+    def __init__(self, groupname):
         """
         Initialize class instance with necassary infos related to shared parameters.
 
@@ -126,10 +126,10 @@ class SharedParamUtils():
             paramGroup (obj): BuiltInParameterGroup of the instance for creating/writing
         """
         self.File = revitron.DOC.Application.OpenSharedParameterFile()
-        self.ParamGroup = paramGroup
         self.Group = self._getGroup(groupname)
         groupDefinitions = self.Group.Definitions
         self.DefiDict = {x.Name:x for x in groupDefinitions}
+        self.ParamGroup = self._getParamGroup()
 
     def _getGroup(self, groupName):
         """
@@ -171,7 +171,6 @@ class SharedParamUtils():
 
         Args:
             category (obj): Target category
-            paramGroup (obj): Parameter group of instance property
             paramNames (list): List of parameter names to create
             readOnly (bool, optional): If the paramer should be user modifible
         """
@@ -183,6 +182,17 @@ class SharedParamUtils():
             revitron.DOC.ParameterBindings.Insert(sharedParamDefi,
                                                 instanceBinding,
                                                 self.ParamGroup)
+    
+    def _getParamGroup(self):
+        """
+        Get the parameter group from the shared parameter file.
+        """
+        try:
+            return revitron.DB.BuiltInParameterGroup.PG_ADSK_MODEL_PROPERTIES
+        except:
+            # for Revit 2024+
+            return revitron.DB.GroupTypeId.AdskModelProperties
+
     
     def _getParamFromGroup(self, instance, paramName):
         """""
@@ -196,10 +206,14 @@ class SharedParamUtils():
         Returns:
             object: Parameter object
         """""
-        param = [p for p in instance.Parameters 
-                if p.Definition.ParameterGroup == self.ParamGroup
-                and p.Definition.Name == paramName] 
-        return param[0]
+        for p in instance.Parameters:
+            try:
+                pGroup = p.Definition.ParameterGroup
+            except:
+                pGroup = p.Definition.GetGroupTypeId()
+            if pGroup == self.ParamGroup and p.Definition.Name == paramName:
+                return p
+        return None
 
     def writeParamstoDishape(self, area, dishape, paramDict):
         """

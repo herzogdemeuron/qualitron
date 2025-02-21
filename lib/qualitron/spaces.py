@@ -21,9 +21,8 @@ class SpaceHelperManager(object):
         self.CategoryStr = categoryStr
         self.Prefix = self.CategoryStr + 'Helper_'
 
-        paramGroup = revitron.DB.BuiltInParameterGroup\
-                                .PG_ADSK_MODEL_PROPERTIES
-        self.ParamUtils = SharedParamUtils(self.Prefix, paramGroup)
+        
+        self.ParamUtils = SharedParamUtils(self.Prefix)
 
         self.Dishapes = []
         self.DishapeTypeIdsToPurge = []
